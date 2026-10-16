@@ -1,0 +1,43 @@
+#spring.jpa.hibernate.ddl-auto=update
+
+#none
+#Hibernate does nothing to the schema.
+
+#validate
+#Hibernate checks whether the DB schema matches the mappings.
+
+#update
+#Hibernate attempts to modify the existing schema to match the entities.
+
+#create
+#Hibernate creates the schema.
+
+#create-drop
+#Creates it and drops it when the persistence context/application shuts down.
+app:
+  config:
+    threads: 3
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/shipment_db
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: false
+
+    properties:
+      hibernate:
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer

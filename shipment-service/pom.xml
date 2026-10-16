@@ -7,10 +7,10 @@
         <artifactId>shipment-platform</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>shipment</artifactId>
+    <artifactId>shipment-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>shipment</name>
-    <description>shipment</description>
+    <name>shipment-service</name>
+    <description>shipment-service</description>
     <url/>
     <licenses>
         <license/>
