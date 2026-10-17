@@ -1,5 +1,6 @@
 package com.example.shipment.model;
 
+import com.example.invoicing.model.Invoice;
 import com.example.shipment.model.comment.CustomerComment;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -34,6 +35,13 @@ public class Customer {
 
     @OneToMany(mappedBy = "customer")
     private List<CustomerComment> customerComments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "customer")
+    private List<Invoice> customerInvoices = new ArrayList<>();
+
+    @Version
+    @Column(name = "version")
+    private Long version;
 
     // relationship can be bidirectional, but it's not a must, depends on business requirement
     // we shouldn't make everything bidirectional, just because we can
