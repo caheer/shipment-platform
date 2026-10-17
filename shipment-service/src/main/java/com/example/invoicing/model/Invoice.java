@@ -31,34 +31,34 @@ public class Invoice {
     @Column(name = "invoice_number", unique = true)
     private String invoiceNumber;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shipment_id")
     private Shipment shipment;
 
     @JoinColumn(name = "customer_id")
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Customer customer;
 
     @Column(name = "billing_address")
     private String billingAddress;
 
     @Column(name = "rate_per_km", precision = 12, scale = 2)
-    @Digits(integer = 12, fraction = 2)
+    @Digits(integer = 10, fraction = 2)
     private BigDecimal ratePerKm;
 
     @Column(name = "kilometers_spent")
     private int kilometersSpent;
 
     @Column(name = "taxes", precision = 12, scale = 2)
-    @Digits(integer = 12, fraction = 2)
+    @Digits(integer = 10, fraction = 2)
     private BigDecimal taxes;
 
     @Column(name = "additional_charges", precision = 12, scale = 2)
-    @Digits(integer = 12, fraction = 2)
+    @Digits(integer = 10, fraction = 2)
     private BigDecimal additionalCharges;
 
     @Column(name = "total_amount", precision = 12, scale = 2)
-    @Digits(integer = 12, fraction = 2)
+    @Digits(integer = 10, fraction = 2)
     private BigDecimal totalAmount;
 
     @Column(name = "invoice_status")
