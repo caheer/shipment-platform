@@ -1,4 +1,4 @@
-package com.example.shipment.proxies;
+package com.example.shipmentexperiments.proxies;
 
 public interface ShipmentService {
     void updateShipment();

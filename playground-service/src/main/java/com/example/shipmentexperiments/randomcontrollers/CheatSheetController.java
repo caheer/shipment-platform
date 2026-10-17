@@ -1,9 +1,11 @@
-package com.example.shipment.controller;
+package com.example.shipmentexperiments.randomcontrollers;
 
 import com.example.shipment.dto.ShipmentDetailsDto;
 import com.example.shipment.service.ShipmentService;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -85,5 +87,40 @@ public class CheatSheetController {
     // Less relevant
    // 5. @RequestPart	Multipart request,	Uploaded file or JSON part
   // 6.  @ModelAttribute	Request/form parameters	, Bind multiple fields to DTO
+
+
+
+    //RequestEntity<T> — incoming HTTP request
+    //Provides access to the request body, headers, HTTP method, and URI.
+
+    @PostMapping("/requestEntExample")
+    public ResponseEntity<Void> createShipment(
+            RequestEntity<ShipmentDetailsDto> request) {
+
+        ShipmentDetailsDto dto = request.getBody();
+        HttpHeaders headers = request.getHeaders();
+        HttpMethod method = request.getMethod();
+        URI uri = request.getUrl();
+
+        //shipmentService.create(dto);
+
+        return ResponseEntity.ok().build();
+    }
+
+
+    //ResponseEntity<T> — outgoing HTTP response
+    //Provides control over the response body, HTTP status, and headers.
+
+    @GetMapping("/responseEntExample/{id}")
+    public ResponseEntity<ShipmentDetailsDto> getShipment(
+            @PathVariable UUID id) {
+
+        ShipmentDetailsDto dto = shipmentService.getShipmentById(id);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .header("X-Shipment-Status", "FOUND")
+                .body(dto);
+    }
 
 }

@@ -1,4 +1,4 @@
-package com.example.shipment.proxies;
+package com.example.shipmentexperiments.proxies;
 
 import java.lang.reflect.Proxy;
 

@@ -1,4 +1,4 @@
-package com.example.shipment.controller;
+package com.example.shipmentexperiments.randomcontrollers;
 
 import com.example.shipment.service.TestService;
 import org.springframework.web.bind.annotation.GetMapping;
