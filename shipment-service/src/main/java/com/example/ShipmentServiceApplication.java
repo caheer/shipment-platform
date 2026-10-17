@@ -1,13 +1,13 @@
-package com.example.shipment;
+package com.example;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = "com.example")
-public class PlaygroundServiceApplication {
+public class ShipmentServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(PlaygroundServiceApplication.class, args);
+        SpringApplication.run(ShipmentServiceApplication.class, args);
     }
 
 }

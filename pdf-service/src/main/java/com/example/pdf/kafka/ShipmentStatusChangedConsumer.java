@@ -1,4 +1,4 @@
-package com.example.pdfservice.kafka;
+package com.example.pdf.kafka;
 
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;

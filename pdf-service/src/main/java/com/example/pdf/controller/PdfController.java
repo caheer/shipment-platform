@@ -1,6 +1,6 @@
-package com.example.pdfservice.controller;
+package com.example.pdf.controller;
 
-import com.example.pdfservice.service.PdfService;
+import com.example.pdf.service.PdfService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;

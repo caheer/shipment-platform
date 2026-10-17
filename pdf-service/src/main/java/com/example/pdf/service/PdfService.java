@@ -1,7 +1,7 @@
-package com.example.pdfservice.service;
+package com.example.pdf.service;
 
-import com.example.pdfservice.client.ShipmentClient;
-import com.example.pdfservice.dto.ShipmentDto;
+import com.example.pdf.client.ShipmentClient;
+import com.example.pdf.dto.ShipmentDto;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;

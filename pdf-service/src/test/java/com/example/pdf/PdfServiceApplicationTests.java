@@ -1,4 +1,4 @@
-package com.example.pdfservice;
+package com.example.pdf;
 
 /*
 import org.junit.jupiter.api.Test;

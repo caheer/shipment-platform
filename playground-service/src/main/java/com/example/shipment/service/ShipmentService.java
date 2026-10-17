@@ -48,6 +48,12 @@ public class ShipmentService {
         return newShipment;
     }
 
+    @Transactional
+    public ShipmentDetailsDto createNewShipment(ShipmentDetailsDto shipment) {
+        // TEMPORARY
+        return null;
+    }
+
 
     @Transactional
     public String updateShipmentStatus(

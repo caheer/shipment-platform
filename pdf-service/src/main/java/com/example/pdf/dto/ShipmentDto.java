@@ -1,4 +1,4 @@
-package com.example.pdfservice.dto;
+package com.example.pdf.dto;
 
 import java.util.UUID;
 
