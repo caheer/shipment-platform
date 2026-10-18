@@ -1,5 +1,6 @@
 package com.example.invoicing.service;
 
+import com.example.AIGeneratedCode;
 import com.example.invoicing.dto.InvoiceDetailedDto;
 import com.example.invoicing.dto.InvoiceSearchItemDto;
 import com.example.invoicing.model.Invoice;
@@ -36,6 +37,7 @@ public class InvoiceService {
         return invoiceSearchByCriteriaRepository.invoiceSearchByCriteria(invoiceSearchCriteria);
     }
 
+    @AIGeneratedCode
     @Transactional
     public void updateRatePerKm(UUID invoiceId, BigDecimal ratePerKm) {
         Invoice invoice = findInvoice(invoiceId);
@@ -45,6 +47,7 @@ public class InvoiceService {
         recalculateTotal(invoice);
     }
 
+    @AIGeneratedCode
     @Transactional
     public void updateTaxes(UUID invoiceId, BigDecimal taxes) {
         Invoice invoice = findInvoice(invoiceId);
@@ -54,6 +57,7 @@ public class InvoiceService {
         recalculateTotal(invoice);
     }
 
+    @AIGeneratedCode
     @Transactional
     public void updateAdditionalCharges(UUID invoiceId, BigDecimal additionalCharges) {
         Invoice invoice = findInvoice(invoiceId);
@@ -63,12 +67,14 @@ public class InvoiceService {
         recalculateTotal(invoice);
     }
 
+    @AIGeneratedCode
     private Invoice findInvoice(UUID invoiceId) {
         return invoiceRepository.findById(invoiceId)
                 .orElseThrow(() ->
                         new EntityNotFoundException("Invoice not found: " + invoiceId));
     }
 
+    @AIGeneratedCode
     private void validateAmount(BigDecimal amount) {
         if (amount == null || amount.signum() < 0) {
             throw new IllegalArgumentException(
@@ -76,6 +82,7 @@ public class InvoiceService {
         }
     }
 
+    @AIGeneratedCode
     private void recalculateTotal(Invoice invoice) {
 
         BigDecimal transportCharge = invoice.getRatePerKm()
