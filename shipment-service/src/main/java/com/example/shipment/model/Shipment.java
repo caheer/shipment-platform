@@ -25,7 +25,7 @@ public class Shipment {
 
     public Shipment(UUID shipmentId, Customer customer, ShipmentStatus shipmentStatus,
                     Location currentLocation, Location destinationLocation, String shipmentName,
-                    String shipmentDescription, BigDecimal weightKg, BigDecimal declaredValue) {
+                    String shipmentDescription, BigDecimal weightKg, BigDecimal declaredValue,ShippingType shippingType) {
         this.shipmentId = shipmentId;
         this.customer = customer;
         this.shipmentStatus = shipmentStatus;
@@ -35,6 +35,7 @@ public class Shipment {
         this.shipmentDescription = shipmentDescription;
         this.weightKg = weightKg;
         this.declaredValue = declaredValue;
+        this.shippingType = shippingType;
     }
 
     @Id
@@ -88,6 +89,10 @@ public class Shipment {
 
     @OneToMany(mappedBy = "shipment")
     private List<Invoice> shipmentInvoices = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "shipping_type", nullable = false)
+    private ShippingType shippingType;
 
     @Version
     @Column(name = "version")

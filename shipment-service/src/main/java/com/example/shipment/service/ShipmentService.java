@@ -40,7 +40,7 @@ public class ShipmentService {
 
         Event event = eventRepository.findByEventCode(4000000001L).orElseThrow();
         Shipment newShipment = new Shipment(UUID.randomUUID(), null, ShipmentStatus.CREATED, null,
-                null, shipment.getShipmentName(), null, null, null);
+                null, shipment.getShipmentName(), null, null, null, ShippingType.STANDARD);
         shipmentRepository.save(newShipment);
         ShipmentEvent shipmentEvent = new ShipmentEvent(UUID.randomUUID(), newShipment, event, LocalDateTime.now());
         shipmentEventRepository.save(shipmentEvent);

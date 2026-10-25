@@ -4,6 +4,8 @@ import com.example.AIGeneratedCode;
 import com.example.invoicing.dto.InvoiceDetailedDto;
 import com.example.invoicing.dto.InvoiceSearchItemDto;
 import com.example.invoicing.model.Invoice;
+import com.example.invoicing.pricing.PricingStrategyFactory;
+import com.example.invoicing.pricing.ShippingPricingStrategy;
 import com.example.invoicing.repository.InvoiceRepository;
 import com.example.invoicing.repository.InvoiceSearchByCriteriaRepository;
 import com.example.invoicing.repository.InvoiceSearchCriteria;
@@ -22,9 +24,12 @@ public class InvoiceService {
 
     private final InvoiceSearchByCriteriaRepository invoiceSearchByCriteriaRepository;
 
-    public InvoiceService(InvoiceRepository invoiceRepository, InvoiceSearchByCriteriaRepository invoiceSearchByCriteriaRepository) {
+    private final PricingStrategyFactory pricingStrategyFactory;
+
+    public InvoiceService(InvoiceRepository invoiceRepository, InvoiceSearchByCriteriaRepository invoiceSearchByCriteriaRepository, PricingStrategyFactory pricingStrategyFactory) {
         this.invoiceRepository = invoiceRepository;
         this.invoiceSearchByCriteriaRepository = invoiceSearchByCriteriaRepository;
+        this.pricingStrategyFactory = pricingStrategyFactory;
     }
 
     @Transactional
@@ -85,8 +90,16 @@ public class InvoiceService {
     @AIGeneratedCode
     private void recalculateTotal(Invoice invoice) {
 
-        BigDecimal transportCharge = invoice.getRatePerKm()
-                .multiply(BigDecimal.valueOf(invoice.getKilometersSpent()));
+        ShippingPricingStrategy strategy =
+                pricingStrategyFactory.getStrategy(
+                        invoice.getShipment().getShippingType()
+                );
+
+        BigDecimal transportCharge = strategy.calculatePrice(
+                invoice.getRatePerKm(),
+                invoice.getKilometersSpent()
+        );
+
 
         BigDecimal total = transportCharge
                 .add(invoice.getTaxes())
