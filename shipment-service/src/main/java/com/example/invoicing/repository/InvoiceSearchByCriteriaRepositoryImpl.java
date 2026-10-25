@@ -4,10 +4,12 @@ import com.example.invoicing.dto.InvoiceSearchItemDto;
 import com.example.invoicing.model.Invoice;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
+import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class InvoiceSearchByCriteriaRepositoryImpl implements InvoiceSearchByCriteriaRepository {
 
     private final EntityManager entityManager;
