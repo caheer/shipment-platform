@@ -1,4 +1,4 @@
-package com.example.shipment.pdf;
+package com.example.pdf;
 
 public enum PdfJobStatus {
     PENDING,

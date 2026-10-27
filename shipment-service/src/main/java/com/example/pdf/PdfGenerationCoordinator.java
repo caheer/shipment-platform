@@ -1,6 +1,9 @@
-package com.example.shipment.pdf;
+package com.example.pdf;
 
-import com.example.shipment.service.FakePdfGenerationService;
+import com.example.pdf.service.FakePdfGenerationService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -13,13 +16,43 @@ public class PdfGenerationCoordinator {
     private final ExecutorService pdfExecutor;
     private final FakePdfGenerationService fakePdfGenerationService;
     private final PdfJobRegistry pdfJobRegistry;
+    private final AsyncPdfWorker asyncPdfWorker;
+
+    private static final Logger log =
+            LoggerFactory.getLogger(PdfGenerationCoordinator.class);
 
     public PdfGenerationCoordinator(
             ExecutorService pdfExecutor,
-            FakePdfGenerationService fakePdfGenerationService, PdfJobRegistry pdfJobRegistry) {
+            FakePdfGenerationService fakePdfGenerationService, PdfJobRegistry pdfJobRegistry, AsyncPdfWorker asyncPdfWorker) {
         this.pdfExecutor = pdfExecutor;
         this.fakePdfGenerationService = fakePdfGenerationService;
         this.pdfJobRegistry = pdfJobRegistry;
+        this.asyncPdfWorker = asyncPdfWorker;
+    }
+
+    public UUID startGenerationAsync(UUID shipmentId) {
+
+        UUID jobId = UUID.randomUUID();
+
+        pdfJobRegistry.createJob(jobId);
+
+        System.out.println("JOB ID: " + jobId);
+        pdfJobRegistry.markRunning(jobId);
+        CompletableFuture<Void> future =
+                asyncPdfWorker.generatePdfAsync(shipmentId);
+
+        future.whenComplete((result, exception) -> {
+            if (exception == null) {
+                pdfJobRegistry.markCompleted(jobId);
+            } else {
+                System.out.println("FUTURE COMPLETED EXCEPTIONALLY: " + future.isCompletedExceptionally());
+                pdfJobRegistry.markFailed(jobId);
+                log.error("PDF generation failed for shipment {}", shipmentId, exception);
+                exception.printStackTrace();
+            }
+        });
+
+        return jobId;
     }
 
     public UUID startGeneration(UUID shipmentId) {

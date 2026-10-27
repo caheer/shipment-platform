@@ -1,4 +1,4 @@
-package com.example.shipment.config;
+package com.example.pdf.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

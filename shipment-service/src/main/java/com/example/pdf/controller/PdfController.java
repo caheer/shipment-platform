@@ -1,8 +1,8 @@
-package com.example.shipment.controller;
+package com.example.pdf.controller;
 
-import com.example.shipment.pdf.PdfGenerationCoordinator;
-import com.example.shipment.pdf.PdfJobRegistry;
-import com.example.shipment.pdf.PdfJobStatus;
+import com.example.pdf.PdfGenerationCoordinator;
+import com.example.pdf.PdfJobRegistry;
+import com.example.pdf.PdfJobStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -24,25 +24,14 @@ public class PdfController {
         return pdfJobRegistry.getStatus(jobId);
     }
 
+    @PostMapping("/generatePdfAsync/{shipmentId}")
+    public UUID generatePdfAsync(@PathVariable UUID shipmentId) {
+        return pdfGenerationCoordinator.startGenerationAsync(shipmentId);
+    }
+
     @PostMapping("/generatePdf/{shipmentId}")
     public UUID generatePdf(@PathVariable UUID shipmentId) {
 
         return pdfGenerationCoordinator.startGeneration(shipmentId);
-
-/*
-        we don't really use manual Thread handling like this:
-        Thread thread = new Thread(
-                () -> fakePdfGenerationService.generateShipmentPdf(shipmentId)
-        );
-
-        thread.start();
-*/
-
-
-/*              Future is not very efficient - future.get blocks the thread by making it wait till the task is complete
-                Future<?> future =
-                pdfExecutor.submit(
-                        () -> fakePdfGenerationService.generateShipmentPdf(shipmentId)
-                );*/
     }
 }

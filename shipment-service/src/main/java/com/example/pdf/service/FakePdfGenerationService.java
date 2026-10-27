@@ -1,4 +1,4 @@
-package com.example.shipment.service;
+package com.example.pdf.service;
 
 import com.example.shipment.model.Shipment;
 import com.example.shipment.repository.ShipmentRepository;
