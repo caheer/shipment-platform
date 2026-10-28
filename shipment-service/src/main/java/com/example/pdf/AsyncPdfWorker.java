@@ -18,9 +18,9 @@ public class AsyncPdfWorker {
     }
 
     @Async
-    public CompletableFuture<Void> generatePdfAsync(UUID shipmentId) {
+    public CompletableFuture<String> generatePdfAsync(UUID shipmentId) {
         System.out.println("Worker: " + Thread.currentThread().getName());
-        fakePdfGenerationService.generateShipmentPdf(shipmentId);
-        return CompletableFuture.completedFuture(null);
+        String generatedPdf = fakePdfGenerationService.generateShipmentPdf(shipmentId);
+        return CompletableFuture.completedFuture(generatedPdf);
     }
 }

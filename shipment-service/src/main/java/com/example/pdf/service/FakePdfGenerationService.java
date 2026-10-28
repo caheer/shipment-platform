@@ -18,7 +18,7 @@ public class FakePdfGenerationService {
     }
 
     @Transactional
-    public void generateShipmentPdf(UUID shipmentId) {
+    public String generateShipmentPdf(UUID shipmentId) {
 
         Shipment shipment = shipmentRepository.findById(shipmentId)
                 .orElseThrow();
@@ -46,5 +46,6 @@ public class FakePdfGenerationService {
         System.out.println("################ PDF GENERATED ################");
         System.out.println(pdfContent);
         System.out.println("################################################");
+        return pdfContent;
     }
 }

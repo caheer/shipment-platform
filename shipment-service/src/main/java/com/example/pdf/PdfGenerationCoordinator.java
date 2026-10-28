@@ -38,8 +38,7 @@ public class PdfGenerationCoordinator {
 
         System.out.println("JOB ID: " + jobId);
         pdfJobRegistry.markRunning(jobId);
-        CompletableFuture<Void> future =
-                asyncPdfWorker.generatePdfAsync(shipmentId);
+        CompletableFuture<String> future = asyncPdfWorker.generatePdfAsync(shipmentId);
 
         future.whenComplete((result, exception) -> {
             if (exception == null) {
@@ -50,12 +49,14 @@ public class PdfGenerationCoordinator {
                 log.error("PDF generation failed for shipment {}", shipmentId, exception);
                 exception.printStackTrace();
             }
+        }).thenAccept(pdfContent -> {
+            System.out.println(pdfContent);
         });
 
         return jobId;
     }
 
-    public UUID startGeneration(UUID shipmentId) {
+    public UUID startGenerationAsyncV1(UUID shipmentId) {
 
         UUID jobId = UUID.randomUUID();
 
@@ -65,55 +66,26 @@ public class PdfGenerationCoordinator {
         // When this future is done, inspect whether it succeeded or failed and do some side effect
 
         CompletableFuture
-                .runAsync(() -> {
+                .supplyAsync(() -> {
 
                     pdfJobRegistry.markRunning(jobId);
 
-                    fakePdfGenerationService
+                    String pdfContent = fakePdfGenerationService
                             .generateShipmentPdf(shipmentId);
 
+                    return pdfContent;
                 }, pdfExecutor)
                 .whenComplete((result, exception) -> {
 
                     if (exception == null) {
                         pdfJobRegistry.markCompleted(jobId);
+                        System.out.println("Generated PDF content: " + result);
                     } else {
                         pdfJobRegistry.markFailed(jobId);
+                        exception.printStackTrace();
                     }
 
                 });
-
-
-/*
-    The version below splits success and failure handling into two separate stages.
-    thenRun(...) runs only if the previous stage completed successfully
-
-
-        CompletableFuture<Void> future =
-                CompletableFuture.runAsync(() -> {
-                    pdfJobRegistry.markRunning(jobId);
-                    fakePdfGenerationService.generateShipmentPdf(shipmentId);
-                }, pdfExecutor);
-
-        future.thenRun(() -> pdfJobRegistry.markCompleted(jobId))
-                .exceptionally(ex -> {
-                    pdfJobRegistry.markFailed(jobId);
-                    return null;
-                });*/
-//###########################################£££
-        /* Just plain executor with execute
-        pdfExecutor.execute(() -> {
-            try {
-                pdfJobRegistry.markRunning(jobId);
-
-                fakePdfGenerationService.generateShipmentPdf(shipmentId);
-
-                pdfJobRegistry.markCompleted(jobId);
-
-            } catch (Exception e) {
-                pdfJobRegistry.markFailed(jobId);
-            }
-        });*/
 
         return jobId;
     }
