@@ -1,17 +1,17 @@
-package com.example.pdf.service;
+package com.example.report.service;
 
-import com.example.pdf.client.ShipmentClient;
-import com.example.pdf.dto.ShipmentDto;
+import com.example.report.client.ShipmentClient;
+import com.example.report.dto.ShipmentDto;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
 @Service
-public class PdfService {
+public class ReportService {
 
     private final ShipmentClient shipmentClient;
 
-    public PdfService(ShipmentClient shipmentClient) {
+    public ReportService(ShipmentClient shipmentClient) {
         this.shipmentClient = shipmentClient;
     }
 
@@ -19,7 +19,7 @@ public class PdfService {
         ShipmentDto shipment = shipmentClient.getShipment(shipmentId);
 
         return """
-                SHIPMENT PDF
+                SHIPMENT REPORT
                 ID: %s
                 Name: %s
                 Status: %s

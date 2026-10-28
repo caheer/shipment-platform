@@ -7,10 +7,10 @@
         <artifactId>shipment-platform</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>pdf-service</artifactId>
+    <artifactId>report-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>pdf-service</name>
-    <description>pdf-service</description>
+    <name>report-service</name>
+    <description>report-service</description>
     <url/>
     <licenses>
         <license/>

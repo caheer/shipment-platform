@@ -3,17 +3,17 @@ server:
 
 spring:
   application:
-    name: pdf-service
+    name: report-service
   kafka:
     bootstrap-servers: localhost:9092
 
     consumer:
-      group-id: pdf-service
+      group-id: report-service
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
 
       properties:
-        spring.json.trusted.packages: "com.example.pdfservice.kafka"
+        spring.json.trusted.packages: "com.example.report.kafka"
         spring.json.use.type.headers: false
-        spring.json.value.default.type: com.example.pdfservice.kafka.ShipmentStatusChangedEvent
+        spring.json.value.default.type: com.example.report.kafka.ShipmentStatusChangedEvent

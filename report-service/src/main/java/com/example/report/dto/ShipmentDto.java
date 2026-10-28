@@ -1,4 +1,4 @@
-package com.example.pdf.dto;
+package com.example.report.dto;
 
 import java.util.UUID;
 

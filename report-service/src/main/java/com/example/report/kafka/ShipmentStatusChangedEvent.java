@@ -1,4 +1,4 @@
-package com.example.pdf.kafka;
+package com.example.report.kafka;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

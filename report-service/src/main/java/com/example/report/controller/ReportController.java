@@ -1,6 +1,6 @@
-package com.example.pdf.controller;
+package com.example.report.controller;
 
-import com.example.pdf.service.PdfService;
+import com.example.report.service.ReportService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,17 +9,17 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/pdf")
-public class PdfController {
+@RequestMapping("/report")
+public class ReportController {
 
-    private final PdfService pdfService;
+    private final ReportService reportService;
 
-    public PdfController(PdfService pdfService) {
-        this.pdfService = pdfService;
+    public ReportController(ReportService reportService) {
+        this.reportService = reportService;
     }
 
     @GetMapping("/{shipmentId}")
     public String generate(@PathVariable UUID shipmentId) {
-        return pdfService.generate(shipmentId);
+        return reportService.generate(shipmentId);
     }
 }

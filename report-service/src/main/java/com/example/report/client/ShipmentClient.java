@@ -1,6 +1,6 @@
-package com.example.pdf.client;
+package com.example.report.client;
 
-import com.example.pdf.dto.ShipmentDto;
+import com.example.report.dto.ShipmentDto;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
