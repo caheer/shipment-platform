@@ -1,10 +1,12 @@
 package com.example.pdf.service;
 
+import com.example.pdf.model.PdfGenerationResult;
 import com.example.shipment.model.Shipment;
 import com.example.shipment.repository.ShipmentRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -18,17 +20,19 @@ public class FakePdfGenerationService {
     }
 
     @Transactional
-    public String generateShipmentPdf(UUID shipmentId) {
+    public PdfGenerationResult generateShipmentPdf(UUID shipmentId) {
 
         Shipment shipment = shipmentRepository.findById(shipmentId)
                 .orElseThrow();
 
         String pdfContent =
-                "SHIPMENT PDF\n" +
+                "\"################ PDF START ################\");" +
+                        "SHIPMENT PDF\n" +
                         "ID: " + shipment.getShipmentId() + "\n" +
                         "Name: " + shipment.getShipmentName() + "\n" +
                         "Status: " + shipment.getShipmentStatus() + "\n" +
-                        "Description: " + shipment.getShipmentDescription();
+                        "Description: " + shipment.getShipmentDescription() + "\n" +
+                        "\"################ PDF END ################\")";
 
         System.out.println(
                 "Starting PDF generation for shipment " + shipmentId +
@@ -43,9 +47,11 @@ public class FakePdfGenerationService {
             throw new RuntimeException("PDF generation interrupted", e);
         }
 
+        PdfGenerationResult pdfGenerationResult = new PdfGenerationResult(shipment.getShipmentId(),pdfContent, LocalDateTime.now());
+
         System.out.println("################ PDF GENERATED ################");
         System.out.println(pdfContent);
         System.out.println("################################################");
-        return pdfContent;
+        return pdfGenerationResult;
     }
 }

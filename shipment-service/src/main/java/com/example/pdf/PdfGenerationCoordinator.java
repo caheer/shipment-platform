@@ -1,11 +1,13 @@
 package com.example.pdf;
 
+import com.example.pdf.model.PdfGenerationResult;
 import com.example.pdf.service.FakePdfGenerationService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -36,27 +38,79 @@ public class PdfGenerationCoordinator {
 
         pdfJobRegistry.createJob(jobId);
 
-        System.out.println("JOB ID: " + jobId);
+        log.info("JOB ID: " + jobId);
         pdfJobRegistry.markRunning(jobId);
-        CompletableFuture<String> future = asyncPdfWorker.generatePdfAsync(shipmentId);
+        CompletableFuture<PdfGenerationResult> future = asyncPdfWorker.generatePdfAsync(shipmentId);
 
-        future.whenComplete((result, exception) -> {
+        CompletableFuture<String> formattedFuture = future
+                .thenApply(result -> {
+
+                    log.info("Formatting PDF...");
+
+                    if (result.pdfContent().contains("SHIPMENT PDF")) {
+                        throw new IllegalStateException("Simulated formatting error");
+                    }
+
+                    return "Generated for shipment: " + result.shipmentId()
+                            + "\nGenerated at: " + result.generatedAt()
+                            + "\n\n" + result.pdfContent();
+                })
+                .exceptionally(exception -> {
+
+                    log.warn("Formatting failed. Using fallback.", exception);
+
+                    return "PDF content unavailable";
+                });
+
+        formattedFuture
+                .thenAccept(content -> log.info("FINAL CONTENT: {}", content))
+                .whenComplete((result, exception) -> {
+                    if (exception == null) {
+                        pdfJobRegistry.markCompleted(jobId);
+                    } else {
+                        pdfJobRegistry.markFailed(jobId);
+                        log.error("PDF processing failed", exception);
+                    }
+                });
+
+        CompletableFuture<PdfGenerationResult> generationFuture =
+                asyncPdfWorker.generatePdfAsync(shipmentId)
+                        .exceptionallyCompose(exception -> {
+
+                            log.warn("First PDF generation attempt failed. Retrying...",
+                                    exception);
+
+                            return asyncPdfWorker.generatePdfAsync(shipmentId);
+                        });
+
+
+
+/*        CompletableFuture<Void> formattedFuture = future.thenApply(result -> {
+
+            log.info("thenApply thread: " + Thread.currentThread().getName());
+            return "Generated for shipment: " + result.shipmentId() + "\nGenerated at: " + result.generatedAt() + "\n\n" + result.pdfContent();
+
+        }).thenAccept(content -> {
+
+            log.info("thenAccept thread: " + Thread.currentThread().getName());
+            log.info("CONTENT: " + content);
+
+        }).whenComplete((result, exception) -> {
+
             if (exception == null) {
                 pdfJobRegistry.markCompleted(jobId);
             } else {
-                System.out.println("FUTURE COMPLETED EXCEPTIONALLY: " + future.isCompletedExceptionally());
                 pdfJobRegistry.markFailed(jobId);
+                log.error("FUTURE COMPLETED EXCEPTIONALLY: " + future.isCompletedExceptionally());
+                log.error("STACKTRACE: " + Arrays.toString(exception.getStackTrace()));
                 log.error("PDF generation failed for shipment {}", shipmentId, exception);
-                exception.printStackTrace();
             }
-        }).thenAccept(pdfContent -> {
-            System.out.println(pdfContent);
-        });
+        });*/
 
         return jobId;
     }
 
-    public UUID startGenerationAsyncV1(UUID shipmentId) {
+/*    public UUID startGenerationAsyncV1(UUID shipmentId) {
 
         UUID jobId = UUID.randomUUID();
 
@@ -70,7 +124,7 @@ public class PdfGenerationCoordinator {
 
                     pdfJobRegistry.markRunning(jobId);
 
-                    String pdfContent = fakePdfGenerationService
+                    PdfGenerationResult pdfContent = fakePdfGenerationService
                             .generateShipmentPdf(shipmentId);
 
                     return pdfContent;
@@ -88,5 +142,5 @@ public class PdfGenerationCoordinator {
                 });
 
         return jobId;
-    }
+    }*/
 }

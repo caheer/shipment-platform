@@ -1,5 +1,6 @@
 package com.example.pdf;
 
+import com.example.pdf.model.PdfGenerationResult;
 import com.example.pdf.service.FakePdfGenerationService;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -18,9 +19,9 @@ public class AsyncPdfWorker {
     }
 
     @Async
-    public CompletableFuture<String> generatePdfAsync(UUID shipmentId) {
+    public CompletableFuture<PdfGenerationResult> generatePdfAsync(UUID shipmentId) {
         System.out.println("Worker: " + Thread.currentThread().getName());
-        String generatedPdf = fakePdfGenerationService.generateShipmentPdf(shipmentId);
-        return CompletableFuture.completedFuture(generatedPdf);
+        PdfGenerationResult pdfGenerationResult = fakePdfGenerationService.generateShipmentPdf(shipmentId);
+        return CompletableFuture.completedFuture(pdfGenerationResult);
     }
 }

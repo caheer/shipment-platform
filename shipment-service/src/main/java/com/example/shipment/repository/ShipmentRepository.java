@@ -34,10 +34,7 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
     ShipmentDetailsDto findDtoByShipmentId(UUID shipmentId);
 
 
-/*    @EntityGraph(attributePaths = {
-            "shipmentComments"
-    })
-    List<Shipment> getShipmentsWithComments();*/
+
 
     @Query("""
                 select new com.example.shipment.dto.ShipmentListDto(
@@ -53,6 +50,10 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
     Page<ShipmentListDto> findShipmentList(Pageable pageable);
 
     // I'm not currently using the ones below, they are here for reference / potential future use
+    /*    @EntityGraph(attributePaths = {
+            "shipmentComments"
+    })
+    List<Shipment> getShipmentsWithComments();*/
 /*
     @EntityGraph(attributePaths = {
             "insurance",
