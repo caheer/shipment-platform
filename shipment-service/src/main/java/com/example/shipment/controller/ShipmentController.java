@@ -2,6 +2,7 @@ package com.example.shipment.controller;
 
 import com.example.shipment.dto.ShipmentDetailsDto;
 import com.example.shipment.dto.ShipmentListDto;
+import com.example.shipment.dto.ShipmentPdfDataDto;
 import com.example.shipment.model.Shipment;
 import com.example.shipment.model.ShipmentStatus;
 import com.example.shipment.service.ShipmentService;
@@ -54,5 +55,10 @@ public class ShipmentController {
     @GetMapping("/getShipmentById/{shipmentId}")
     public ShipmentDetailsDto getShipmentById(@PathVariable UUID shipmentId) {
         return shipmentService.getShipmentById(shipmentId);
+    }
+
+    @GetMapping("/getShipmentPdfDataByShipmentId/{shipmentId}")
+    public ShipmentPdfDataDto getShipmentPdfDataByShipmentId(@PathVariable UUID shipmentId) {
+        return shipmentService.getShipmentPdfDataByShipmentId(shipmentId);
     }
 }

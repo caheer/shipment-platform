@@ -16,7 +16,7 @@ excluded_dir = (
 
 # Example: project_snapshot_2026-09-21_17-02-15.txt
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-output_file = project_root / f"project_snapshot_{timestamp}.txt"
+output_file = project_root / f"shipment_service_project_snapshot_{timestamp}.txt"
 
 print(f"Project directory: {project_root}")
 print(f"Looking for src in: {src_dir}")

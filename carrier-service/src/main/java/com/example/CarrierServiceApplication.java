@@ -1,13 +1,13 @@
-package org.example.pdfservice;
+package com.example;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PdfServiceApplication {
+public class CarrierServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(PdfServiceApplication.class, args);
+        SpringApplication.run(CarrierServiceApplication.class, args);
     }
 
 }

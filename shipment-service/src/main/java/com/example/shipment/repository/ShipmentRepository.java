@@ -5,9 +5,9 @@ import com.example.shipment.dto.ShipmentListDto;
 import com.example.shipment.model.Shipment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -33,8 +33,15 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
             """)
     ShipmentDetailsDto findDtoByShipmentId(UUID shipmentId);
 
-
-
+    @Query("""
+    SELECT s FROM Shipment s
+    LEFT JOIN FETCH s.customer
+    LEFT JOIN FETCH s.currentLocation
+    LEFT JOIN FETCH s.destinationLocation
+    WHERE s.shipmentId = :shipmentId
+    """)
+    Optional<Shipment> findShipmentWithPdfDetailsByShipmentId(
+            @Param("shipmentId") UUID shipmentId);
 
     @Query("""
                 select new com.example.shipment.dto.ShipmentListDto(
@@ -49,33 +56,18 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
             """)
     Page<ShipmentListDto> findShipmentList(Pageable pageable);
 
-    // I'm not currently using the ones below, they are here for reference / potential future use
-    /*    @EntityGraph(attributePaths = {
-            "shipmentComments"
-    })
-    List<Shipment> getShipmentsWithComments();*/
 /*
     @EntityGraph(attributePaths = {
             "insurance",
             "insurance.provider",
             "customer",
-            "assignedCourier"
+            "assignedCourier",
+            "shipmentComments"
     })
     @Query("select s from Shipment s")
     List<Shipment> findAllWithDetails();
 
-    @Query("""
-                        select s from Shipment s where s.shipmentStatus = :status
-            """)
-    List<Shipment> findShipmentsByStatus(@Param("status") ShipmentStatus status);
 
-    @Query("""
-                        SELECT s
-                        FROM Shipment s
-                        WHERE s.shipmentStatus = :status
-                        AND LOWER(s.shipmentName) LIKE LOWER(CONCAT('%', :name, '%'))
-            """)
-    List<Shipment> findShipmentsByStatusAndName(ShipmentStatus status, String name);
 
     @Query("""
                 SELECT DISTINCT s

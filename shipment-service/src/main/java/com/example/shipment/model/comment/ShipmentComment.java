@@ -2,6 +2,7 @@ package com.example.shipment.model.comment;
 
 import com.example.shipment.model.Shipment;
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "shipments_comments")
 @Setter
+@Getter
 public class ShipmentComment extends Comment {
 
     protected ShipmentComment() {
