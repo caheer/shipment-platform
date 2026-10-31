@@ -1,0 +1,21 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: invoice-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/shipment_db
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+

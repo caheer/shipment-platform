@@ -30,6 +30,7 @@
         <module>report-service</module>
         <module>notification-service</module>
         <module>carrier-service</module>
+        <module>invoice-service</module>
     </modules>
 
 </project>
