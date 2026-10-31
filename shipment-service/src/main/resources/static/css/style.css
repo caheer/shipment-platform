@@ -1,0 +1,20 @@
+:root { --ink:#172a45; --surface:#f4f7fb; --accent:#305fda; }
+body { background:var(--surface); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+.topbar { background:#172a45; padding:1rem 0; }
+.nav-pills .nav-link { color:#52647c; font-weight:600; }
+.nav-pills .nav-link.active { background:var(--accent); }
+h1 { font-size:1.65rem; font-weight:750; letter-spacing:-.03em; }
+.card { border:1px solid #e2e9f2; border-radius:13px; box-shadow:0 2px 12px #23334a08; overflow:hidden; }
+.card-header { background:white; border-bottom:1px solid #e8edf5; font-weight:700; padding:1rem 1.15rem; }
+.card-body { padding:1.2rem; }
+.card-footer { background:#fff; border-color:#e8edf5; }
+.table th { background:#f8fafd; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; color:#6b7890; font-weight:700; white-space:nowrap; }
+.table td,.table th { padding:.9rem 1rem; }
+.muted { color:#758399; }
+.uuid { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.78rem; overflow-wrap:anywhere; }
+.uuid-input { min-width:245px; }
+.badge-soft { display:inline-block; padding:.37rem .6rem; font-size:.74rem; border-radius:8px; background:#edf2ff; color:#3155a4; font-weight:700; }
+.badge-soft.ok { background:#e4f7ed; color:#18764f; }.badge-soft.warn { background:#fff3d9; color:#94600c; }.badge-soft.bad { background:#ffeced; color:#ad3746; }
+.live-dot { display:inline-block; width:8px; height:8px; background:#2ed4a0; border-radius:50%; margin-right:6px; }
+.stat-value { font-size:2rem; font-weight:800; }.comment-entry { border-bottom:1px solid #edf0f5; padding:.7rem 0; }.comment-entry:last-child{border:0}.comments{max-height:275px;overflow-y:auto}
+button:disabled{cursor:not-allowed}
