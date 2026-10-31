@@ -10,8 +10,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "shipments_comments")
-@Setter
 @Getter
+@Setter
 public class ShipmentComment extends Comment {
 
     protected ShipmentComment() {
@@ -26,7 +26,6 @@ public class ShipmentComment extends Comment {
             Shipment shipment) {
 
         super(commentId, commentText, commentDate, addedBy);
-
         this.priorityAction = priorityAction;
         this.shipment = shipment;
     }

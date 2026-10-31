@@ -16,7 +16,7 @@ DROP TABLE IF EXISTS customers_comments;
 DROP TABLE IF EXISTS shipment_tags;
 DROP TABLE IF EXISTS shipment_insurance;
 DROP TABLE IF EXISTS shipment_events;
-DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS comments; -- remove former JOINED-inheritance base table
 DROP TABLE IF EXISTS shipments;
 
 DROP TABLE IF EXISTS tags;
@@ -193,51 +193,32 @@ CREATE TABLE shipment_events (
 
 
 -- ============================================================
--- COMMENTS
--- Base table for JOINED inheritance:
--- Comment -> ShipmentComment / CustomerComment
+-- SHIPMENT COMMENTS (independent table; no JOINED inheritance)
 -- ============================================================
-
--- comment author column (employee_id) to be introduced once Employee
--- hierarchy is added; added_by can then be removed.
-
-CREATE TABLE comments (
-                          comment_id   UUID PRIMARY KEY,
-                          comment_text VARCHAR(255) NOT NULL,
-                          comment_date TIMESTAMP NOT NULL,
-                          added_by     VARCHAR(255)
-);
-
--- ============================================================
--- SHIPMENT COMMENTS
--- ============================================================
-
 CREATE TABLE shipments_comments (
-                                    comment_id  UUID PRIMARY KEY,
+                                    comment_id UUID PRIMARY KEY,
                                     shipment_id UUID NOT NULL,
+                                    comment_text VARCHAR(255) NOT NULL,
+                                    comment_date TIMESTAMP NOT NULL,
+                                    added_by VARCHAR(255),
                                     priority_action BOOLEAN NOT NULL,
-
-                                    FOREIGN KEY (comment_id)
-                                        REFERENCES comments(comment_id),
-
-                                    FOREIGN KEY (shipment_id)
+                                    CONSTRAINT fk_shipments_comments_shipment FOREIGN KEY (shipment_id)
                                         REFERENCES shipments(shipment_id)
 );
 
 -- ============================================================
--- CUSTOMER COMMENTS
+-- CUSTOMER COMMENTS (independent table)
 -- ============================================================
-
 CREATE TABLE customers_comments (
                                     comment_id UUID PRIMARY KEY,
                                     customer_id UUID NOT NULL,
-
-                                    FOREIGN KEY (comment_id)
-                                        REFERENCES comments(comment_id),
-
-                                    FOREIGN KEY (customer_id)
+                                    comment_text VARCHAR(255) NOT NULL,
+                                    comment_date TIMESTAMP NOT NULL,
+                                    added_by VARCHAR(255),
+                                    CONSTRAINT fk_customers_comments_customer FOREIGN KEY (customer_id)
                                         REFERENCES customers(customer_id)
 );
+
 -- ============================================================
 -- SHIPMENT TAGS
 -- Association entity between Shipment and Tag.

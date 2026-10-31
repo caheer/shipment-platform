@@ -7,9 +7,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity
-@Table(name = "comments")
-@Inheritance(strategy = InheritanceType.JOINED)
+@MappedSuperclass
 @Getter
 @Setter
 public abstract class Comment {
@@ -41,5 +39,4 @@ public abstract class Comment {
 
     @Column(name = "added_by")
     private String addedBy;
-
 }
