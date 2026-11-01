@@ -1,6 +1,7 @@
 package com.example.pdf.client;
 
 import com.example.pdf.dto.ShipmentPdfDataDto;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -11,9 +12,11 @@ public class ShipmentClient {
 
     private final RestClient restClient;
 
-    public ShipmentClient(RestClient.Builder builder) {
+    public ShipmentClient(
+            RestClient.Builder builder,
+            @Value("${services.shipment.base-url}") String baseUrl) {
         this.restClient = builder
-                .baseUrl("http://localhost:8080")
+                .baseUrl(baseUrl)
                 .build();
     }
 
@@ -23,4 +26,8 @@ public class ShipmentClient {
                 .retrieve()
                 .body(ShipmentPdfDataDto.class);
     }
+
+    //the HTTP request is actually executed when you call the terminal operation .body(...), not when you call .get().
+
+    //if ShipmentClient throws an exception, FakePdfGenerationService stops executing, and the exception propagates to AsyncPdfWorker.
 }

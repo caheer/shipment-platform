@@ -28,9 +28,4 @@ public class PdfController {
     public UUID generatePdfAsync(@PathVariable UUID shipmentId) {
         return pdfGenerationCoordinator.startGenerationAsync(shipmentId);
     }
-
-/*    @PostMapping("/generatePdf/{shipmentId}")
-    public UUID generatePdf(@PathVariable UUID shipmentId) {
-        return pdfGenerationCoordinator.startGenerationAsyncV1(shipmentId);
-    }*/
 }

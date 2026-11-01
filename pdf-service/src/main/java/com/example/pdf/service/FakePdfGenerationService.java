@@ -3,8 +3,9 @@ package com.example.pdf.service;
 import com.example.pdf.client.ShipmentClient;
 import com.example.pdf.dto.ShipmentPdfDataDto;
 import com.example.pdf.model.PdfGenerationResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,29 +16,25 @@ public class FakePdfGenerationService {
 
     private final ShipmentClient shipmentClient;
 
+    private static final Logger log =
+            LoggerFactory.getLogger(FakePdfGenerationService.class);
+
     public FakePdfGenerationService(ShipmentClient shipmentClient) {
         this.shipmentClient = shipmentClient;
     }
 
-    @Transactional
     public PdfGenerationResult generateShipmentPdf(UUID shipmentId) {
+        log.info("################################################################################################");
+
+        log.info("Starting REST call to shipment-service");
 
         ShipmentPdfDataDto shipmentPdfDataDto = shipmentClient.getShipmentPdfDataByShipmentId(shipmentId);
+        // 3. The worker is blocked until the HTTP response arrives or the request fails. If successful, it receives ShipmentPdfDataDto.
+        /*If this throws an exception, the remainder of generateShipmentPdf() will not execute.
+        If invoked through your Spring @Async method returning CompletableFuture<PdfGenerationResult>, the asynchronous computation will complete exceptionally.*/
 
-
-        String pdfContent =
-                "\"################ PDF START ################\");" +
-                        "SHIPMENT PDF\n" +
-                        "ID: " + shipmentPdfDataDto.shipmentId() + "\n" +
-                        "Name: " + shipmentPdfDataDto.shipmentName() + "\n" +
-                        "Status: " + shipmentPdfDataDto.status() + "\n" +
-                        "Description: " + shipmentPdfDataDto.shipmentDescription() + "\n" +
-                        "\"################ PDF END ################\")";
-
-        System.out.println(
-                "Starting PDF generation for shipment " + shipmentId +
-                        " on thread " + Thread.currentThread().getName()
-        );
+        log.info("Finished REST call to shipment-service");
+        log.info("Starting PDF generation for shipment " + shipmentId + " on thread " + Thread.currentThread().getName());
 
         try {
             int randomNumber = ThreadLocalRandom.current().nextInt(3000, 8001);
@@ -46,12 +43,25 @@ public class FakePdfGenerationService {
             Thread.currentThread().interrupt();
             throw new RuntimeException("PDF generation interrupted", e);
         }
+        String pdfContent =
+                """
+                                             "############################PDF CONTENTS START ############################");" + "\\n" +
+                                             "SHIPMENT PDF\\n" +
+                                             "ID: " + shipmentPdfDataDto.shipmentId() + "\\n" +
+                                             "Name: " + shipmentPdfDataDto.shipmentName() + "\\n" +
+                                             "Status: " + shipmentPdfDataDto.status() + "\\n" +
+                                             "Description: " + shipmentPdfDataDto.shipmentDescription() + "\\n" +
+                                             ""############################ PDF CONTENTS END ############################")";
+                        
+                        """;
 
-        PdfGenerationResult pdfGenerationResult = new PdfGenerationResult(shipmentPdfDataDto.shipmentId(),pdfContent, LocalDateTime.now());
+        log.info("Generated PDF Content: " + pdfContent);
 
-        System.out.println("################ PDF GENERATED ################");
-        System.out.println(pdfContent);
-        System.out.println("################################################");
+        PdfGenerationResult pdfGenerationResult = new PdfGenerationResult(shipmentPdfDataDto.shipmentId(), pdfContent, LocalDateTime.now());
+        //4. Worker generates the PDF
+        //Your fake service simulates the generation using Thread.sleep() for 3–8 seconds. Once finished, it creates and returns PdfGenerationResult.
+        log.info("PDF GENERATED");
+        log.info("################################################################################################");
         return pdfGenerationResult;
     }
 }

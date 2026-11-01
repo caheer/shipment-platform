@@ -3,9 +3,16 @@ server:
 app:
   config:
     threads: 3
+services:
+  shipment:
+    base-url: http://localhost:8080
 spring:
   application:
     name: pdf-service
+  http:
+    clients:
+      connect-timeout: 2s
+      read-timeout: 5s
   datasource:
     url: jdbc:postgresql://localhost:5432/shipment_db
     username: ${DB_USERNAME:postgres}
@@ -19,6 +26,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
   kafka:
     bootstrap-servers: localhost:9092
 
