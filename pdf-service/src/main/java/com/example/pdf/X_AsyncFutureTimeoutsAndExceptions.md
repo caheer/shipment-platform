@@ -4,8 +4,8 @@ Notes for the `@Async` PDF-generation flow using `RestClient` and `CompletableFu
 
 ## A. What if something throws an exception?
 
-1. `RestClient` throws an exception (or another operation inside `FakePdfGenerationService` throws an exception).
-2. The exception propagates out of `FakePdfGenerationService`.
+1. `RestClient` throws an exception (or another operation inside `ShipmentPdfGenerationService` throws an exception).
+2. The exception propagates out of `ShipmentPdfGenerationService`.
 3. Execution of `generatePdfAsync()` stops.
 4. `CompletableFuture.completedFuture(...)` is never executed.
 5. Spring's async infrastructure catches the exception and completes the caller's `CompletableFuture` exceptionally.
@@ -17,7 +17,7 @@ Notes for the `@Async` PDF-generation flow using `RestClient` and `CompletableFu
 
 1. `RestClient` exceeds its configured HTTP timeout (e.g., a read timeout of 5 seconds).
 2. `RestClient` throws an exception, typically `ResourceAccessException`.
-3. The exception propagates out of `FakePdfGenerationService`.
+3. The exception propagates out of `ShipmentPdfGenerationService`.
 4. Execution of `generatePdfAsync()` stops.
 5. `CompletableFuture.completedFuture(...)` is never executed.
 6. Spring's async infrastructure catches the exception and completes the caller's `CompletableFuture` exceptionally.

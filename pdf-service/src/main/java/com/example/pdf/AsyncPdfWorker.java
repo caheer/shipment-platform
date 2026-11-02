@@ -1,7 +1,7 @@
 package com.example.pdf;
 
 import com.example.pdf.model.PdfGenerationResult;
-import com.example.pdf.service.FakePdfGenerationService;
+import com.example.pdf.service.ShipmentPdfGenerationService;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -11,11 +11,11 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class AsyncPdfWorker {
 
-    private final FakePdfGenerationService fakePdfGenerationService;
+    private final ShipmentPdfGenerationService shipmentPdfGenerationService;
 
 
-    public AsyncPdfWorker(FakePdfGenerationService fakePdfGenerationService) {
-        this.fakePdfGenerationService = fakePdfGenerationService;
+    public AsyncPdfWorker(ShipmentPdfGenerationService shipmentPdfGenerationService) {
+        this.shipmentPdfGenerationService = shipmentPdfGenerationService;
     }
 
     @Async("pdfExecutor")
@@ -25,7 +25,7 @@ public class AsyncPdfWorker {
         //2.Async worker thread starts executing the method generateShipmentPdf
         //It prints its thread name and calls fakePdfGenerationService.generateShipmentPdf(shipmentId)
         System.out.println("Worker: " + Thread.currentThread().getName());
-        PdfGenerationResult pdfGenerationResult = fakePdfGenerationService.generateShipmentPdf(shipmentId);
+        PdfGenerationResult pdfGenerationResult = shipmentPdfGenerationService.generateShipmentPdf(shipmentId);
 
         //5.Worker executes completedFuture(...)
         //return CompletableFuture.completedFuture(pdfGenerationResult);

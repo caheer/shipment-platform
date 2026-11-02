@@ -17,7 +17,7 @@ The following sequence applies when Spring's `@Async` support is enabled and the
 
 2. **An async worker thread starts executing `generatePdfAsync()`.**
    - It prints its thread name.
-   - It calls `fakePdfGenerationService.generateShipmentPdf(shipmentId)`.
+   - It calls `shipmentPdfGenerationService.generateShipmentPdf(shipmentId)`.
 
 3. **The worker calls `shipment-service` using `RestClient`.**
    - The worker is blocked until the HTTP response arrives or the request fails.
