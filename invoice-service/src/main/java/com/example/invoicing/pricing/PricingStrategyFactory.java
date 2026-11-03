@@ -1,6 +1,6 @@
 package com.example.invoicing.pricing;
 
-import com.example.shipment.model.ShippingType;
+import com.example.invoicing.model.ShippingType;
 import org.springframework.stereotype.Component;
 
 @Component

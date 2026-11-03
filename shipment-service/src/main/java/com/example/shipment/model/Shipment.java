@@ -1,6 +1,5 @@
 package com.example.shipment.model;
 
-import com.example.invoicing.model.Invoice;
 import com.example.shipment.model.comment.ShipmentComment;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Digits;
@@ -86,9 +85,6 @@ public class Shipment {
 
     @OneToMany(mappedBy = "shipment")
     private List<ShipmentComment>  shipmentComments = new ArrayList<>();
-
-    @OneToMany(mappedBy = "shipment")
-    private List<Invoice> shipmentInvoices = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "shipping_type", nullable = false)

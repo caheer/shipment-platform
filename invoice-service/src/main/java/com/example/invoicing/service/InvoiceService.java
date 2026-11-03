@@ -3,6 +3,7 @@ package com.example.invoicing.service;
 import com.example.AIGeneratedCode;
 import com.example.invoicing.dto.InvoiceDetailedDto;
 import com.example.invoicing.dto.InvoiceSearchItemDto;
+import com.example.invoicing.dto.ShipmentInvoiceDataDto;
 import com.example.invoicing.model.Invoice;
 import com.example.invoicing.pricing.PricingStrategyFactory;
 import com.example.invoicing.pricing.ShippingPricingStrategy;
@@ -92,7 +93,7 @@ public class InvoiceService {
 
         ShippingPricingStrategy strategy =
                 pricingStrategyFactory.getStrategy(
-                        invoice.getShipment().getShippingType()
+                        invoice.getShippingType()
                 );
 
         BigDecimal transportCharge = strategy.calculatePrice(
@@ -106,5 +107,11 @@ public class InvoiceService {
                 .add(invoice.getAdditionalCharges());
 
         invoice.setTotalAmount(total);
+    }
+
+    public Invoice createNewShipmentInvoice(ShipmentInvoiceDataDto shipmentInvoiceDataDto) {
+        Invoice invoice = new Invoice(UUID.randomUUID());
+        invoiceRepository.save(invoice); //TODO
+        return invoice;
     }
 }

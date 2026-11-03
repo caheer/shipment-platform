@@ -16,8 +16,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
 
     @Query("""
     SELECT i FROM Invoice i
-    LEFT JOIN FETCH i.shipment
-    LEFT JOIN FETCH i.customer
     WHERE i.invoiceId = :id
     """)
     Invoice findInvoiceByInvoiceId(@Param("id") UUID id);
@@ -26,8 +24,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
     @Query("""
             select new com.example.invoicing.dto.InvoiceDetailedDto(
                                  i.invoiceNumber,
-                                 i.shipment,
-                                 i.customer,
+                                 i.shipmentName,
+                                 i.customerName,
                                  i.billingAddress,
                                  i.ratePerKm,
                                  i.kilometersSpent,
@@ -37,8 +35,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
                                  i.invoiceStatus,
                                  i.invoiceType,
                                  i.issuedAt,
-                                 i.issuedBy) from Invoice i  LEFT JOIN i.shipment
-                LEFT JOIN i.customer
+                                 i.issuedBy) from Invoice i
                WHERE i.invoiceId = :id
             """)
     InvoiceDetailedDto findInvoiceDetailsById(UUID id);

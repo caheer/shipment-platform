@@ -1,8 +1,5 @@
 package com.example.invoicing.model;
 
-
-import com.example.shipment.model.Customer;
-import com.example.shipment.model.Shipment;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Digits;
 import lombok.Getter;
@@ -28,16 +25,27 @@ public class Invoice {
     @Column(name = "invoice_id")
     private UUID invoiceId;
 
+    @Column(name = "shipment_id")
+    private UUID shipmentId;
+
+    @Column(name = "customer_id")
+    private UUID customerId;
+
+    @Column(name = "customer_name", nullable = false, length = 255)
+    private String customerName;
+
+    @Column(name = "customer_email", nullable = false, length = 255)
+    private String customerEmail;
+
     @Column(name = "invoice_number", unique = true)
     private String invoiceNumber;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shipment_id")
-    private Shipment shipment;
+    @Column(name = "shipment_name", nullable = false)
+    private String shipmentName;
 
-    @JoinColumn(name = "customer_id")
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Customer customer;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "shipping_type", nullable = false)
+    private ShippingType shippingType;
 
     @Column(name = "billing_address")
     private String billingAddress;

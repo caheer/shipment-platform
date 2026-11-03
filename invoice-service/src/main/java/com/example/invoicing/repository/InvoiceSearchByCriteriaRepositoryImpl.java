@@ -67,7 +67,7 @@ public class InvoiceSearchByCriteriaRepositoryImpl implements InvoiceSearchByCri
 
         return invoiceList.stream()
                 .map(invoice -> new InvoiceSearchItemDto(invoice.getInvoiceNumber(),
-                        invoice.getShipment().getShipmentName(), invoice.getCustomer().getCustomerName(),
+                        invoice.getShipmentName(), invoice.getCustomerName(),
                         invoice.getInvoiceStatus(), invoice.getInvoiceType())).toList();
 
 

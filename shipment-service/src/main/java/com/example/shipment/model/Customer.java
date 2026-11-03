@@ -1,6 +1,5 @@
 package com.example.shipment.model;
 
-import com.example.invoicing.model.Invoice;
 import com.example.shipment.model.comment.CustomerComment;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -35,9 +34,6 @@ public class Customer {
 
     @OneToMany(mappedBy = "customer")
     private List<CustomerComment> customerComments = new ArrayList<>();
-
-    @OneToMany(mappedBy = "customer")
-    private List<Invoice> customerInvoices = new ArrayList<>();
 
     @Version
     @Column(name = "version")

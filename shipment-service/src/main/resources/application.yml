@@ -1,5 +1,8 @@
 #spring.jpa.hibernate.ddl-auto=update
 
+services:
+  invoice:
+    base-url: http://localhost:8082
 spring:
   application:
     name: shipment-service
