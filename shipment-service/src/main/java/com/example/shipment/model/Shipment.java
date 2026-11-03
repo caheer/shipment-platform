@@ -24,7 +24,7 @@ public class Shipment {
 
     public Shipment(UUID shipmentId, Customer customer, ShipmentStatus shipmentStatus,
                     Location currentLocation, Location destinationLocation, String shipmentName,
-                    String shipmentDescription, BigDecimal weightKg, BigDecimal declaredValue,ShippingType shippingType) {
+                    String shipmentDescription, BigDecimal weightKg, BigDecimal declaredValue, ShippingType shippingType) {
         this.shipmentId = shipmentId;
         this.customer = customer;
         this.shipmentStatus = shipmentStatus;
@@ -85,6 +85,10 @@ public class Shipment {
 
     @OneToMany(mappedBy = "shipment")
     private List<ShipmentComment>  shipmentComments = new ArrayList<>();
+
+    // Invoice revisions are managed by shipment-service; invoice entities live in invoice-service.
+    @OneToMany(mappedBy = "shipment")
+    private List<ShipmentInvoiceRevision> invoiceRevisions = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "shipping_type", nullable = false)

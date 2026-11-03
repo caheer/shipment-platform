@@ -10,7 +10,8 @@
 -- Child tables must be dropped before referenced tables.
 -- ============================================================
 
-DROP TABLE IF EXISTS invoices;
+DROP TABLE IF EXISTS invoices; -- legacy table (was moved to invoice_db)
+DROP TABLE IF EXISTS shipment_invoice_revisions;
 DROP TABLE IF EXISTS shipments_comments;
 DROP TABLE IF EXISTS customers_comments;
 DROP TABLE IF EXISTS shipment_tags;
@@ -191,6 +192,28 @@ CREATE TABLE shipment_events (
                                          REFERENCES events(event_code)
 );
 
+-- ============================================================
+-- SHIPMENT INVOICE REVISIONS
+-- Each row identifies a distinct invoice creation operation.
+-- Same revision ID is reused for retries; new invoice => new revision ID.
+-- Revision numbers are allocated by shipment-service.
+-- ============================================================
+CREATE TABLE shipment_invoice_revisions (
+                                            shipment_invoice_revision_id UUID PRIMARY KEY,
+                                            shipment_id UUID NOT NULL,
+                                            revision_number INTEGER NOT NULL,
+                                            creation_status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+                                            created_at TIMESTAMP NOT NULL,
+
+                                            CONSTRAINT fk_shipment_invoice_revision_shipment
+                                                FOREIGN KEY (shipment_id) REFERENCES shipments(shipment_id),
+                                            CONSTRAINT uq_shipment_invoice_revision_number
+                                                UNIQUE (shipment_id, revision_number),
+                                            CONSTRAINT chk_shipment_invoice_revision_number
+                                                CHECK (revision_number > 0),
+                                            CONSTRAINT chk_shipment_invoice_creation_status
+                                                CHECK (creation_status IN ('PENDING', 'COMPLETED', 'FAILED'))
+);
 
 -- ============================================================
 -- SHIPMENT COMMENTS (independent table; no JOINED inheritance)
@@ -275,37 +298,4 @@ CREATE TABLE shipment_insurance (
 
                                     CONSTRAINT chk_shipment_insurance_value
                                         CHECK (insured_value >= 0)
-);
-
-
--- ============================================================
--- INVOICES
--- Multiple invoices can reference the same shipment or customer.
--- No invoice/customer junction table is needed.
--- UUIDs are assigned by the Java application, not the database.
--- ============================================================
-
-CREATE TABLE invoices (
-                          invoice_id           UUID NOT NULL,
-                          invoice_number       VARCHAR(255),
-                          shipment_id          UUID,
-                          customer_id          UUID,
-                          billing_address      VARCHAR(255),
-                          rate_per_km          NUMERIC(12,2),
-                          kilometers_spent     INTEGER,
-                          taxes                NUMERIC(12,2),
-                          additional_charges   NUMERIC(12,2),
-                          total_amount         NUMERIC(12,2),
-                          invoice_status       VARCHAR(255),
-                          invoice_type         VARCHAR(255),
-                          issued_at            TIMESTAMP,
-                          issued_by            VARCHAR(255),
-                          version              BIGINT NOT NULL DEFAULT 0,
-
-                          CONSTRAINT pk_invoices PRIMARY KEY (invoice_id),
-                          CONSTRAINT uq_invoices_invoice_number UNIQUE (invoice_number),
-                          CONSTRAINT fk_invoices_shipment FOREIGN KEY (shipment_id)
-                              REFERENCES shipments(shipment_id),
-                          CONSTRAINT fk_invoices_customer FOREIGN KEY (customer_id)
-                              REFERENCES customers(customer_id)
 );

@@ -19,13 +19,22 @@ public class Invoice {
         this.invoiceId = invoiceId;
     }
 
-    protected Invoice(){};
+    protected Invoice() {
+    }
 
     @Id
     @Column(name = "invoice_id")
     private UUID invoiceId;
 
-    @Column(name = "shipment_id")
+    // Logical reference to shipment_db; unique per invoice creation operation.
+    // No cross-database foreign key or @ManyToOne mapping.
+    @Column(name = "shipment_invoice_revision_id", nullable = false, unique = true)
+    private UUID shipmentInvoiceRevisionId;
+
+    @Column(name = "revision_number", nullable = false)
+    private int revisionNumber;
+
+    @Column(name = "shipment_id", nullable = false)
     private UUID shipmentId;
 
     @Column(name = "customer_id")
@@ -86,5 +95,4 @@ public class Invoice {
     @Version
     @Column(name = "version")
     private Long version;
-
 }

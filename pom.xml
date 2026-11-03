@@ -27,10 +27,10 @@
     <modules>
         <module>shipment-service</module>
         <module>pdf-service</module>
-        <module>report-service</module>
-        <module>notification-service</module>
-        <module>carrier-service</module>
         <module>invoice-service</module>
+        <!--module>report-service</module-->
+        <!--module>notification-service</module-->
+        <!--module>carrier-service</module-->
     </modules>
 
 </project>
