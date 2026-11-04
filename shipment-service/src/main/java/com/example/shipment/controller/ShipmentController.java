@@ -31,11 +31,14 @@ public class ShipmentController {
         return ResponseEntity.created(location).body(created);
     }
 
-    @PatchMapping("/updateShipmentStatus/{shipmentId}")
-    public String updateShipmentStatus(
+    @PatchMapping("/{shipmentId}/status")
+    public ResponseEntity<Void> updateShipmentStatus(
             @PathVariable UUID shipmentId,
-            @RequestBody ShipmentStatus shipmentStatus) {
-        return shipmentService.updateShipmentStatus(shipmentId, shipmentStatus);
+            @Valid @RequestBody ShipmentStatusUpdateDto dto) {
+
+        shipmentService.updateShipmentStatus(shipmentId, dto.shipmentStatus());
+
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/getShipmentById/{shipmentId}")

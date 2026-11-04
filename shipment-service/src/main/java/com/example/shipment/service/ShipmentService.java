@@ -95,29 +95,44 @@ public class ShipmentService {
 
 
     @Transactional
-    public String updateShipmentStatus(
+    public void updateShipmentStatus(
             UUID shipmentId,
-            ShipmentStatus shipmentStatus) {
+            ShipmentStatus newStatus) {
 
-        Shipment shipment = shipmentRepository.findByShipmentId(shipmentId)
+        Shipment shipment = shipmentRepository.findById(shipmentId)
                 .orElseThrow(() ->
                         new ShipmentNotFoundException(shipmentId));
 
-        shipment.setShipmentStatus(shipmentStatus);
+        if (shipment.getShipmentStatus() == newStatus) {
+            throw new IllegalStateException(
+                    "Shipment already has status: " + newStatus);
+        }
 
-        Event event = eventRepository.findByEventName(shipmentStatus.name()).orElseThrow(() -> new EventConfigurationException(shipmentStatus.name()));
-        ShipmentEvent shipmentEvent = new ShipmentEvent(UUID.randomUUID(), shipment, event, LocalDateTime.now());
+        Event event = eventRepository.findByEventName(newStatus.name())
+                .orElseThrow(() ->
+                        new EventConfigurationException(newStatus.name()));
+
+        LocalDateTime changedAt = LocalDateTime.now();
+
+        shipment.setShipmentStatus(newStatus);
+
+        ShipmentEvent shipmentEvent = new ShipmentEvent(
+                UUID.randomUUID(),
+                shipment,
+                event,
+                changedAt
+        );
+
         shipmentEventRepository.save(shipmentEvent);
 
+        // Kafka publishing - unchanged
         shipmentEventProducer.publish(
                 new ShipmentStatusChangedEvent(
                         shipmentId,
-                        shipmentStatus,
-                        LocalDateTime.now()
+                        newStatus,
+                        changedAt
                 )
         );
-
-        return "Shipment " + shipmentId + "status updated to: " + shipmentStatus.getLabel();
     }
 
     @Transactional
