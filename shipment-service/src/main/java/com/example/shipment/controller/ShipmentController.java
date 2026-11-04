@@ -22,11 +22,12 @@ public class ShipmentController {
         this.shipmentService = shipmentService;
     }
 
+    //DONE
     @PostMapping
     public ResponseEntity<ShipmentDto> createShipment(
             @Valid @RequestBody ShipmentCreateDto dto) {
         ShipmentDto created = shipmentService.createShipment(dto);
-        URI location = URI.create("/shipment/" + created.shipmentId());
+        URI location = URI.create("/getShipmentById/" + created.shipmentId());
         return ResponseEntity.created(location).body(created);
     }
 
@@ -34,21 +35,7 @@ public class ShipmentController {
     public String updateShipmentStatus(
             @PathVariable UUID shipmentId,
             @RequestBody ShipmentStatus shipmentStatus) {
-
-        String statusUpdateResult =
-                shipmentService.updateShipmentStatus(shipmentId, shipmentStatus);
-
-        return statusUpdateResult;
-    }
-
-    @GetMapping("/getShipmentListPage")
-    public Page<ShipmentListDto> getShipmentListPage(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size) {
-        return shipmentService.getShipmentListPage(page, size);
-    }
-
-    @GetMapping("/searchShipmentsByCriteria")
-    public void searchShipmentsByCriteria() {
-        shipmentService.searchShipmentsByCriteria();
+        return shipmentService.updateShipmentStatus(shipmentId, shipmentStatus);
     }
 
     @GetMapping("/getShipmentById/{shipmentId}")
@@ -60,4 +47,20 @@ public class ShipmentController {
     public ShipmentPdfDataDto getShipmentPdfDataByShipmentId(@PathVariable UUID shipmentId) {
         return shipmentService.getShipmentPdfDataByShipmentId(shipmentId);
     }
+
+    // POC for what can be returned to frontend as list of shipments
+    @GetMapping("/getShipmentListPage")
+    public Page<ShipmentListDto> getShipmentListPage(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size) {
+        return shipmentService.getShipmentListPage(page, size);
+    }
+
+    // POC for searching by criteria with JPA Criteria API
+    @GetMapping("/searchShipmentsByCriteria")
+    public void searchShipmentsByCriteria() {
+        shipmentService.searchShipmentsByCriteria();
+    }
+
+
+
+
 }
