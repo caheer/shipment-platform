@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
@@ -22,28 +23,47 @@ public class Shipment {
         this.shipmentId = shipmentId;
     }
 
-    public Shipment(UUID shipmentId, Customer customer, ShipmentStatus shipmentStatus,
-                    Location currentLocation, Location destinationLocation, String shipmentName,
-                    String shipmentDescription, BigDecimal weightKg, BigDecimal declaredValue, ShippingType shippingType) {
+    public Shipment(UUID shipmentId, String shipmentName, ShipmentStatus shipmentStatus, ShippingType shippingType,
+                    String shipmentDescription, Customer customer, Location currentLocation,
+                    Location destinationLocation, Courier assignedCourier, BigDecimal weightKg, BigDecimal declaredValue, ShipmentInsurance shipmentInsurance, LocalDateTime shipmentDateCreated) {
         this.shipmentId = shipmentId;
-        this.customer = customer;
+        this.shipmentName = shipmentName;
         this.shipmentStatus = shipmentStatus;
+        this.shippingType = shippingType;
+        this.shipmentDescription = shipmentDescription;
+        this.customer = customer;
         this.currentLocation = currentLocation;
         this.destinationLocation = destinationLocation;
-        this.shipmentName = shipmentName;
-        this.shipmentDescription = shipmentDescription;
+        this.assignedCourier = assignedCourier;
         this.weightKg = weightKg;
         this.declaredValue = declaredValue;
-        this.shippingType = shippingType;
+        this.shipmentInsurance = shipmentInsurance;
+        this.shipmentDateCreated = shipmentDateCreated;
     }
-
+    // name , description, weight, declared value - one method  for changing those, no event
+    // customer - added/changed - event
+    // type, destination - no changing
+    // current location-  added/changed - event
+    // shipment status - changed - event
+    // assigned courier - added/changed - event
+    // insurance - added/changd - event
     @Id
     @Column(name = "shipment_id")
     private UUID shipmentId;
 
+    @Column(name = "shipment_name", nullable = false)
+    private String shipmentName;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "shipment_status", nullable = false, length = 50)
     private ShipmentStatus shipmentStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "shipping_type", nullable = false)
+    private ShippingType shippingType;
+
+    @Column(name = "shipment_description", length = 1000)
+    private String shipmentDescription;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
@@ -61,11 +81,6 @@ public class Shipment {
     @ManyToOne(fetch = FetchType.LAZY)
     private Courier assignedCourier;
 
-    @Column(name = "shipment_name", nullable = false)
-    private String shipmentName;
-
-    @Column(name = "shipment_description", length = 1000)
-    private String shipmentDescription;
 
     @Digits(integer = 10, fraction = 3)
     @Column(name = "weight_kg", precision = 10, scale = 3)
@@ -81,18 +96,18 @@ public class Shipment {
 
     // optional
     @OneToOne(mappedBy = "shipment")
-    private ShipmentInsurance insurance;
+    private ShipmentInsurance shipmentInsurance;
+
+    @Column(name = "shipment_date_created", nullable = false)
+    private LocalDateTime shipmentDateCreated;
 
     @OneToMany(mappedBy = "shipment")
-    private List<ShipmentComment>  shipmentComments = new ArrayList<>();
+    private List<ShipmentComment> shipmentComments = new ArrayList<>();
 
     // Invoice revisions are managed by shipment-service; invoice entities live in invoice-service.
     @OneToMany(mappedBy = "shipment")
     private List<ShipmentInvoiceRevision> invoiceRevisions = new ArrayList<>();
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "shipping_type", nullable = false)
-    private ShippingType shippingType;
 
     @Version
     @Column(name = "version")

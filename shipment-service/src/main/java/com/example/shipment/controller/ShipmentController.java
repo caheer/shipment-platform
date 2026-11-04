@@ -1,14 +1,15 @@
 package com.example.shipment.controller;
 
-import com.example.shipment.dto.ShipmentDetailsDto;
-import com.example.shipment.dto.ShipmentListDto;
-import com.example.shipment.dto.ShipmentPdfDataDto;
+import com.example.shipment.dto.*;
 import com.example.shipment.model.Shipment;
 import com.example.shipment.model.ShipmentStatus;
 import com.example.shipment.service.ShipmentService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.UUID;
 
 @RestController
@@ -21,14 +22,12 @@ public class ShipmentController {
         this.shipmentService = shipmentService;
     }
 
-    @PostMapping("/createNewShipment")
-    public String createNewShipment(@RequestBody Shipment shipment) {
-
-        if (shipment.getShipmentName() == null) {
-            return "Shipment name can't be empty";
-        }
-        Shipment newShipment = shipmentService.createNewShipment(shipment);
-        return "shipment/created, no: " + newShipment.getShipmentId();
+    @PostMapping
+    public ResponseEntity<ShipmentDto> createShipment(
+            @Valid @RequestBody ShipmentCreateDto dto) {
+        ShipmentDto created = shipmentService.createShipment(dto);
+        URI location = URI.create("/shipment/" + created.shipmentId());
+        return ResponseEntity.created(location).body(created);
     }
 
     @PatchMapping("/updateShipmentStatus/{shipmentId}")

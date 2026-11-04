@@ -1,11 +1,7 @@
 package com.example.shipment.service;
 
-import com.example.shipment.dto.ShipmentCommentDto;
-import com.example.shipment.dto.ShipmentDetailsDto;
-import com.example.shipment.dto.ShipmentListDto;
-import com.example.shipment.dto.ShipmentPdfDataDto;
-import com.example.shipment.exception.EventConfigurationException;
-import com.example.shipment.exception.ShipmentNotFoundException;
+import com.example.shipment.dto.*;
+import com.example.shipment.exception.*;
 import com.example.shipment.kafka.ShipmentEventProducer;
 import com.example.shipment.kafka.ShipmentStatusChangedEvent;
 import com.example.shipment.model.*;
@@ -28,33 +24,73 @@ public class ShipmentService {
     private final ShipmentSearchByCriteriaRepository shipmentSearchByCriteriaRepository;
     private final ShipmentEventProducer shipmentEventProducer;
     private final ShipmentCommentRepository shipmentCommentRepository;
+    private final CustomerRepository customerRepository;
+    private final CourierRepository courierRepository;
+    private final LocationRepository locationRepository;
 
-    public ShipmentService(ShipmentRepository shipmentRepository, EventRepository eventRepository, ShipmentEventRepository shipmentEventRepository, ShipmentSearchByCriteriaRepository shipmentSearchByCriteriaRepository, EntityManager entityManager, ShipmentEventProducer shipmentEventProducer, ShipmentCommentRepository shipmentCommentRepository) {
+    private static final long SHIPMENT_CREATED_EVENT_CODE = 4000000001L;
+
+    public ShipmentService(ShipmentRepository shipmentRepository, EventRepository eventRepository, ShipmentEventRepository shipmentEventRepository, ShipmentSearchByCriteriaRepository shipmentSearchByCriteriaRepository, EntityManager entityManager, ShipmentEventProducer shipmentEventProducer, ShipmentCommentRepository shipmentCommentRepository, CustomerRepository customerRepository, CourierRepository courierRepository, LocationRepository locationRepository) {
         this.shipmentRepository = shipmentRepository;
         this.eventRepository = eventRepository;
         this.shipmentEventRepository = shipmentEventRepository;
         this.shipmentSearchByCriteriaRepository = shipmentSearchByCriteriaRepository;
         this.shipmentEventProducer = shipmentEventProducer;
         this.shipmentCommentRepository = shipmentCommentRepository;
+        this.customerRepository = customerRepository;
+        this.courierRepository = courierRepository;
+        this.locationRepository = locationRepository;
     }
 
     @Transactional
-    public Shipment createNewShipment(Shipment shipment) {
+    public ShipmentDto createShipment(ShipmentCreateDto shipmentCreateDto) {
 
-        Event event = eventRepository.findByEventCode(4000000001L).orElseThrow();
-        Shipment newShipment = new Shipment(UUID.randomUUID(), null, ShipmentStatus.CREATED, null,
-                null, shipment.getShipmentName(), null, null, null, ShippingType.STANDARD);
-        shipmentRepository.save(newShipment);
-        ShipmentEvent shipmentEvent = new ShipmentEvent(UUID.randomUUID(), newShipment, event, LocalDateTime.now());
+        Customer customer = null;
+        Location currentLocation = null;
+        Location destinationLocation = null;
+        Courier assignedCourier = null;
+
+        if (shipmentCreateDto.customerId() != null) {
+            customer = customerRepository.findById(shipmentCreateDto.customerId())
+                    .orElseThrow(() ->
+                            new CustomerNotFoundException(shipmentCreateDto.customerId()));
+        }
+
+        if (shipmentCreateDto.currentLocationId() != null) {
+            currentLocation = locationRepository.findById(shipmentCreateDto.currentLocationId())
+                    .orElseThrow(() ->
+                            new LocationNotFoundException(shipmentCreateDto.currentLocationId()));
+        }
+
+        if (shipmentCreateDto.destinationLocationId() != null) {
+            destinationLocation = locationRepository.findById(shipmentCreateDto.destinationLocationId())
+                    .orElseThrow(() ->
+                            new LocationNotFoundException(shipmentCreateDto.destinationLocationId()));
+        }
+
+        if (shipmentCreateDto.assignedCourierId() != null) {
+            assignedCourier = courierRepository.findById(shipmentCreateDto.assignedCourierId())
+                    .orElseThrow(() ->
+                            new CourierNotFoundException(shipmentCreateDto.assignedCourierId()));
+        }
+
+        LocalDateTime currentDate = LocalDateTime.now();
+
+        Shipment newShipment = new Shipment(UUID.randomUUID(), shipmentCreateDto.shipmentName(), ShipmentStatus.CREATED,
+                shipmentCreateDto.shippingType(), shipmentCreateDto.shipmentDescription(),
+                customer, currentLocation, destinationLocation, assignedCourier,
+                shipmentCreateDto.weightKg(), shipmentCreateDto.declaredValue(), null, currentDate);
+        Shipment savedShipment = shipmentRepository.save(newShipment);
+
+        Event event = eventRepository
+                .findByEventCode(SHIPMENT_CREATED_EVENT_CODE)
+                .orElseThrow(() ->
+                        new IllegalStateException("CREATED event is not configured"));
+
+        ShipmentEvent shipmentEvent = new ShipmentEvent(UUID.randomUUID(), savedShipment, event, currentDate);
         shipmentEventRepository.save(shipmentEvent);
 
-        return newShipment;
-    }
-
-    @Transactional
-    public ShipmentDetailsDto createNewShipment(ShipmentDetailsDto shipment) {
-        // TEMPORARY
-        return null;
+        return new ShipmentDto(savedShipment.getShipmentId(), savedShipment.getShipmentName());
     }
 
 
@@ -68,9 +104,7 @@ public class ShipmentService {
                         new ShipmentNotFoundException(shipmentId));
 
         shipment.setShipmentStatus(shipmentStatus);
-/*
-        shipmentRepository.save(shipment); - not needed, entity is already managed, dirty checking will do the save
-*/
+
         Event event = eventRepository.findByEventName(shipmentStatus.name()).orElseThrow(() -> new EventConfigurationException(shipmentStatus.name()));
         ShipmentEvent shipmentEvent = new ShipmentEvent(UUID.randomUUID(), shipment, event, LocalDateTime.now());
         shipmentEventRepository.save(shipmentEvent);

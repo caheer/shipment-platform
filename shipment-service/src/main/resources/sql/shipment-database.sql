@@ -141,6 +141,7 @@ CREATE TABLE shipments (
                            weight_kg                   NUMERIC(10,3),
                            declared_value              NUMERIC(12,2),
                            shipping_type               VARCHAR(30) NOT NULL,
+                           shipment_date_created       TIMESTAMP NOT NULL,
                            version                     BIGINT NOT NULL DEFAULT 0,
 
                            CONSTRAINT pk_shipments

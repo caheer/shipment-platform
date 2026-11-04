@@ -109,6 +109,10 @@ public class InvoiceService {
         invoice.setTotalAmount(total);
     }
 
+    // update invoice status - event - sent to shipment ?and stored as ShipmentEvent?
+    // update invoice type - event - sent to shipment ?and stored as ShipmentEvent?\
+    // invoice created- event -  only once it's created here - sent to shipment ?and stored as ShipmentEvent?\
+
     public Invoice createNewShipmentInvoice(ShipmentInvoiceDataDto shipmentInvoiceDataDto) {
         Invoice invoice = new Invoice(UUID.randomUUID());
         invoiceRepository.save(invoice); //TODO
