@@ -3,11 +3,13 @@ package com.example.invoicing.controller;
 import com.example.AIGeneratedCode;
 import com.example.invoicing.dto.InvoiceDetailedDto;
 import com.example.invoicing.dto.InvoiceSearchItemDto;
-import com.example.invoicing.dto.ShipmentInvoiceDataDto;
 import com.example.invoicing.repository.InvoiceSearchCriteria;
 import com.example.invoicing.service.InvoiceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.invoicing.dto.CreateInvoiceRequestDto;
+import com.example.invoicing.dto.InvoiceResponseDto;
+import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -24,7 +26,15 @@ public class InvoiceController {
         this.invoiceService = invoiceService;
     }
 
-/*    public ResponseEntity<ShipmentInvoiceDataDto> createInvoice()*/
+    @PostMapping("/createInvoice")
+    public ResponseEntity<InvoiceResponseDto> createInvoice(
+            @RequestBody CreateInvoiceRequestDto request) {
+
+        InvoiceResponseDto response =
+                invoiceService.createInvoice(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
     @GetMapping("/{invoiceId}")
     public ResponseEntity<InvoiceDetailedDto> getInvoice(
@@ -34,6 +44,7 @@ public class InvoiceController {
                 invoiceService.findInvoiceDetailsById(invoiceId));
     }
 
+/*
     @GetMapping("/exists/{invoiceId}")
     public ResponseEntity<InvoiceDetailedDto> invoiceExists(
             @PathVariable UUID invoiceId) {
@@ -41,6 +52,7 @@ public class InvoiceController {
         return ResponseEntity.ok(
                 invoiceService.findInvoiceDetailsById(invoiceId));
     }
+*/
 
     @PostMapping("/search")
     public ResponseEntity<List<InvoiceSearchItemDto>> searchInvoices(

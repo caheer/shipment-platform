@@ -1,9 +1,10 @@
 package com.example.invoicing.service;
 
 import com.example.AIGeneratedCode;
+import com.example.invoicing.dto.CreateInvoiceRequestDto;
 import com.example.invoicing.dto.InvoiceDetailedDto;
+import com.example.invoicing.dto.InvoiceResponseDto;
 import com.example.invoicing.dto.InvoiceSearchItemDto;
-import com.example.invoicing.dto.ShipmentInvoiceDataDto;
 import com.example.invoicing.model.Invoice;
 import com.example.invoicing.pricing.PricingStrategyFactory;
 import com.example.invoicing.pricing.ShippingPricingStrategy;
@@ -31,6 +32,50 @@ public class InvoiceService {
         this.invoiceRepository = invoiceRepository;
         this.invoiceSearchByCriteriaRepository = invoiceSearchByCriteriaRepository;
         this.pricingStrategyFactory = pricingStrategyFactory;
+    }
+
+
+    @Transactional
+    public InvoiceResponseDto createInvoice(CreateInvoiceRequestDto request) {
+
+        // If the invoice already exists, return its ID.
+        // This handles repeated requests with the same revision ID.
+        var existingInvoice = invoiceRepository
+                .findByShipmentInvoiceRevisionId(
+                        request.shipmentInvoiceRevisionId());
+
+        if (existingInvoice.isPresent()) {
+            return new InvoiceResponseDto(
+                    existingInvoice.get().getInvoiceId()
+            );
+        }
+
+        // Create a new invoice.
+        Invoice invoice = new Invoice(UUID.randomUUID());
+
+        invoice.setShipmentInvoiceRevisionId(
+                request.shipmentInvoiceRevisionId()
+        );
+
+        invoice.setRevisionNumber(request.revisionNumber());
+        invoice.setShipmentId(request.shipmentId());
+        invoice.setShipmentName(request.shipmentName());
+        invoice.setShippingType(request.shippingType());
+
+        invoice.setCustomerId(request.customerId());
+        invoice.setCustomerName(request.customerName());
+        invoice.setCustomerEmail(request.customerEmail());
+
+        // Initial values
+        invoice.setRatePerKm(BigDecimal.ZERO);
+        invoice.setKilometersSpent(0);
+        invoice.setTaxes(BigDecimal.ZERO);
+        invoice.setAdditionalCharges(BigDecimal.ZERO);
+        invoice.setTotalAmount(BigDecimal.ZERO);
+
+        invoiceRepository.save(invoice);
+
+        return new InvoiceResponseDto(invoice.getInvoiceId());
     }
 
     @Transactional
@@ -109,13 +154,4 @@ public class InvoiceService {
         invoice.setTotalAmount(total);
     }
 
-    // update invoice status - event - sent to shipment ?and stored as ShipmentEvent?
-    // update invoice type - event - sent to shipment ?and stored as ShipmentEvent?\
-    // invoice created- event -  only once it's created here - sent to shipment ?and stored as ShipmentEvent?\
-
-    public Invoice createNewShipmentInvoice(ShipmentInvoiceDataDto shipmentInvoiceDataDto) {
-        Invoice invoice = new Invoice(UUID.randomUUID());
-        invoiceRepository.save(invoice); //TODO
-        return invoice;
-    }
 }

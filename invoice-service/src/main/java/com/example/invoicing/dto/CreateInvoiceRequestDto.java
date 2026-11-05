@@ -1,10 +1,9 @@
 package com.example.invoicing.dto;
 
 import com.example.invoicing.model.ShippingType;
-
 import java.util.UUID;
 
-public record ShipmentInvoiceDataDto(
+public record CreateInvoiceRequestDto(
         UUID shipmentId,
         String shipmentName,
         String shipmentDescription,
@@ -12,5 +11,6 @@ public record ShipmentInvoiceDataDto(
         UUID customerId,
         String customerName,
         String customerEmail,
-        UUID shipmentInvoiceRevisionId
+        UUID shipmentInvoiceRevisionId,
+        int revisionNumber
 ) {}
