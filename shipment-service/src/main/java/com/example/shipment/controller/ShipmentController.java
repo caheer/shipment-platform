@@ -1,8 +1,7 @@
 package com.example.shipment.controller;
 
-import com.example.shipment.dto.*;
-import com.example.shipment.model.Shipment;
-import com.example.shipment.model.ShipmentStatus;
+import com.example.shipment.dto.pdf.ShipmentPdfDataDto;
+import com.example.shipment.dto.shipment.*;
 import com.example.shipment.service.ShipmentService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -37,6 +36,27 @@ public class ShipmentController {
             @Valid @RequestBody ShipmentStatusUpdateDto dto) {
 
         shipmentService.updateShipmentStatus(shipmentId, dto.shipmentStatus());
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{shipmentId}/customer")
+    public ResponseEntity<Void> updateShipmentCustomer(
+            @PathVariable UUID shipmentId,
+            @Valid @RequestBody ShipmentCustomerUpdateDto dto) {
+
+        shipmentService.updateShipmentCustomer(shipmentId, dto.customerId());
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{shipmentId}/current-location")
+    public ResponseEntity<Void> updateShipmentCurrentLocation(
+            @PathVariable UUID shipmentId,
+            @Valid @RequestBody ShipmentLocationUpdateDto dto) {
+
+        shipmentService.updateShipmentCurrentLocation(
+                shipmentId, dto.locationId());
 
         return ResponseEntity.noContent().build();
     }
