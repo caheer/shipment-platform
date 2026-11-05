@@ -66,7 +66,7 @@ CREATE TABLE locations (
 
 CREATE TABLE couriers (
                           courier_id      UUID,
-                          courier_name    VARCHAR(255) NOT NULL,
+                          courier_name    VARCHAR(100) NOT NULL,
                           courier_phone_number    VARCHAR(30),
 
                           CONSTRAINT pk_couriers

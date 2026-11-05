@@ -53,33 +53,34 @@ public class ShipmentPdfGenerationService {
             Thread.currentThread().interrupt();
             throw new RuntimeException("PDF generation interrupted", e);
         }
-        String pdfContent;
         Path path;
 
         try {
             byte[] pdfBytes = generateShipmentPdfBox(shipmentId);
-            path = Path.of("D:/ENV/IDEA_PROJECTS/shipment.pdf");
+
+            Path outputDirectory = Path.of("D:/ENV/IDEA_PROJECTS/pdfs");
+            Files.createDirectories(outputDirectory);
+
+            String filename = "shipment_" + shipmentId
+                    + "_" + UUID.randomUUID() + ".pdf";
+
+            path = outputDirectory.resolve(filename);
+
             Files.write(path, pdfBytes);
 
-            pdfContent =
-                    """
-                                                 "############################PDF CONTENTS ############################");" + "\\n" +
-                                                 "############################PDF CONTENTS ############################");" + "\\n" +
-                                                 ""############################ PDF CONTENTS ############################")"+ "\\n" +;
-                            
-                            """ + "WRITTEN TO PATH: " + path;
-
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(
+                    "Failed to save PDF for shipment " + shipmentId, e);
         }
-        log.info("Generated PDF Content:\n " + pdfContent);
 
-        PdfGenerationResult pdfGenerationResult = new PdfGenerationResult(shipmentPdfDataDto.shipmentId(), pdfContent, LocalDateTime.now());
+        log.info("PDF GENERATED: {}", path);
         //4. Worker generates the PDF
         //Your fake service simulates the generation using Thread.sleep() for 3–8 seconds. Once finished, it creates and returns PdfGenerationResult.
-        log.info("PDF GENERATED");
-        log.info("################################################################################################");
-        return pdfGenerationResult;
+        return new PdfGenerationResult(
+                shipmentPdfDataDto.shipmentId(),
+                path.toString(),
+                LocalDateTime.now()
+        );
     }
 
     public byte[] generateShipmentPdfBox(UUID shipmentId)

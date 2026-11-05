@@ -20,16 +20,13 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
     Optional<Shipment> findByShipmentId(UUID shipmentId);
 
     @Query("""
-                select new com.example.shipment.dto.shipment.ShipmentListDto(
+                select new com.example.shipment.dto.shipment.ShipmentDetailsDto(
                     s.shipmentId,
-                    c.customerId,
-                    c.customerName,
                     s.shipmentName,
-                    s.shipmentStatus
+                    s.shipmentStatus,
+                    s.shipmentDescription
                 )
                 from Shipment s
-                left join s.customer c
-                            where  s.shipmentId = :shipmentId
             """)
     ShipmentDetailsDto findDtoByShipmentId(UUID shipmentId);
 

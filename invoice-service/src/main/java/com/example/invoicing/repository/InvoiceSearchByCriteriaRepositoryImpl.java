@@ -32,8 +32,8 @@ public class InvoiceSearchByCriteriaRepositoryImpl implements InvoiceSearchByCri
         Root<Invoice> invoiceRoot = criteriaQuery.from(Invoice.class);
 
         // lazy associations have to be fetched if we want to have them initialized on the returned objects
-        invoiceRoot.fetch("shipment", JoinType.LEFT);
-        invoiceRoot.fetch("customer", JoinType.LEFT);
+        invoiceRoot.get("shipmentName");
+        invoiceRoot.get("customerName");
 
         // create list for search criteria/conditions
         List<Predicate> predicates = new ArrayList<>();
