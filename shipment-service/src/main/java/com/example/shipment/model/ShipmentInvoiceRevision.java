@@ -16,8 +16,7 @@ import java.util.UUID;
 @Setter
 public class ShipmentInvoiceRevision {
 
-    protected ShipmentInvoiceRevision() {
-    }
+    protected ShipmentInvoiceRevision() { }
 
     public ShipmentInvoiceRevision(UUID revisionId, Shipment shipment, int revisionNumber) {
         this.shipmentInvoiceRevisionId = revisionId;
@@ -31,7 +30,6 @@ public class ShipmentInvoiceRevision {
     @Column(name = "shipment_invoice_revision_id", nullable = false)
     private UUID shipmentInvoiceRevisionId;
 
-    // Local JPA foreign key: shipment and revision are in the SAME database.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "shipment_id", nullable = false)
     private Shipment shipment;

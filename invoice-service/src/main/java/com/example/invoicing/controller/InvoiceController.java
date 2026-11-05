@@ -3,6 +3,7 @@ package com.example.invoicing.controller;
 import com.example.AIGeneratedCode;
 import com.example.invoicing.dto.InvoiceDetailedDto;
 import com.example.invoicing.dto.InvoiceSearchItemDto;
+import com.example.invoicing.dto.ShipmentInvoiceDataDto;
 import com.example.invoicing.repository.InvoiceSearchCriteria;
 import com.example.invoicing.service.InvoiceService;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +24,18 @@ public class InvoiceController {
         this.invoiceService = invoiceService;
     }
 
+/*    public ResponseEntity<ShipmentInvoiceDataDto> createInvoice()*/
+
     @GetMapping("/{invoiceId}")
     public ResponseEntity<InvoiceDetailedDto> getInvoice(
+            @PathVariable UUID invoiceId) {
+
+        return ResponseEntity.ok(
+                invoiceService.findInvoiceDetailsById(invoiceId));
+    }
+
+    @GetMapping("/exists/{invoiceId}")
+    public ResponseEntity<InvoiceDetailedDto> invoiceExists(
             @PathVariable UUID invoiceId) {
 
         return ResponseEntity.ok(

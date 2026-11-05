@@ -12,5 +12,5 @@ public record ShipmentInvoiceDataDto(
         UUID customerId,
         String customerName,
         String customerEmail,
-        String destinationLocation
+        UUID shipmentInvoiceRevisionId
 ) {}
