@@ -1,6 +1,7 @@
 package com.example.shipment.service;
 
-import com.example.shipment.dto.*;
+import com.example.shipment.dto.pdf.ShipmentPdfDataDto;
+import com.example.shipment.dto.shipment.*;
 import com.example.shipment.exception.*;
 import com.example.shipment.kafka.ShipmentEventProducer;
 import com.example.shipment.kafka.ShipmentStatusChangedEvent;
@@ -133,6 +134,37 @@ public class ShipmentService {
                         changedAt
                 )
         );
+    }
+
+    @Transactional
+    public void updateShipmentCustomer(UUID shipmentId, UUID customerId) {
+
+        Shipment shipment = shipmentRepository.findById(shipmentId)
+                .orElseThrow(() ->
+                        new ShipmentNotFoundException(shipmentId));
+
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() ->
+                        new CustomerNotFoundException(customerId));
+
+        shipment.setCustomer(customer);
+    }
+
+    @Transactional
+    public void updateShipmentCurrentLocation(
+            UUID shipmentId, UUID locationId) {
+
+        Shipment shipment = shipmentRepository.findById(shipmentId)
+                .orElseThrow(() ->
+                        new ShipmentNotFoundException(shipmentId));
+
+        Location location = locationRepository.findById(locationId)
+                .orElseThrow(() ->
+                        new LocationNotFoundException(locationId));
+
+        shipment.setCurrentLocation(location);
+
+        // Location-specific shipment events will be added here later.
     }
 
     @Transactional

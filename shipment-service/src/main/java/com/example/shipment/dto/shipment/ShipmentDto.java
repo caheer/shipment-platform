@@ -1,4 +1,4 @@
-package com.example.shipment.dto;
+package com.example.shipment.dto.shipment;
 
 import java.util.UUID;
 

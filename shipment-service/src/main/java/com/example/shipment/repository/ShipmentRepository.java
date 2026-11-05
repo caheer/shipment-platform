@@ -1,10 +1,11 @@
 package com.example.shipment.repository;
 
-import com.example.shipment.dto.ShipmentDetailsDto;
-import com.example.shipment.dto.ShipmentListDto;
+import com.example.shipment.dto.shipment.ShipmentDetailsDto;
+import com.example.shipment.dto.shipment.ShipmentListDto;
 import com.example.shipment.model.Shipment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,7 +20,7 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
     Optional<Shipment> findByShipmentId(UUID shipmentId);
 
     @Query("""
-                select new com.example.shipment.dto.ShipmentListDto(
+                select new com.example.shipment.dto.shipment.ShipmentListDto(
                     s.shipmentId,
                     c.customerId,
                     c.customerName,
@@ -43,7 +44,7 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
             @Param("shipmentId") UUID shipmentId);
 
     @Query("""
-                select new com.example.shipment.dto.ShipmentListDto(
+                select new com.example.shipment.dto.shipment.ShipmentListDto(
                     s.shipmentId,
                     c.customerId,
                     c.customerName,
@@ -54,6 +55,14 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
                 left join s.customer c
             """)
     Page<ShipmentListDto> findShipmentList(Pageable pageable);
+
+
+    @EntityGraph(attributePaths = {
+            "customer"
+    })
+    @Query("select s from Shipment s where  s.shipmentId = :shipmentId")
+    Optional<Shipment> findShipmentWithCustomerData(UUID shipmentId);
+
 
 /*
     @EntityGraph(attributePaths = {

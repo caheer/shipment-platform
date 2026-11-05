@@ -1,6 +1,6 @@
 package com.example.shipment.controller;
 
-import com.example.shipment.dto.ShipmentStatusCountDto;
+import com.example.shipment.dto.shipment.ShipmentStatusCountDto;
 import com.example.shipment.service.ShipmentStatisticsService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

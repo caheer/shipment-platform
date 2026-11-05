@@ -1,4 +1,6 @@
-package com.example.shipment.dto;
+package com.example.shipment.dto.pdf;
+
+import com.example.shipment.dto.shipment.ShipmentCommentDto;
 
 import java.util.List;
 import java.util.UUID;

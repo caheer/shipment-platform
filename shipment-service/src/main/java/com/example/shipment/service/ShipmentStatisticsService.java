@@ -1,6 +1,6 @@
 package com.example.shipment.service;
 
-import com.example.shipment.dto.ShipmentStatusCountDto;
+import com.example.shipment.dto.shipment.ShipmentStatusCountDto;
 import com.example.shipment.model.Shipment;
 import com.example.shipment.model.ShipmentStatus;
 import com.example.shipment.repository.ShipmentRepository;
