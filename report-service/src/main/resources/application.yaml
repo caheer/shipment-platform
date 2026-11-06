@@ -1,0 +1,16 @@
+server:
+  port: 8083
+spring:
+  application:
+    name: reports-service
+  datasource:
+    url: ${REPORTS_DB_URL:jdbc:postgresql://localhost:5432/reports_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: reports-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
