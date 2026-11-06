@@ -1,135 +1,66 @@
 'use strict';
-// Served from shipment-service on http://localhost:8080 (same-origin requests).
-const SHIPMENT_API = '';
-const PDF_API = 'http://localhost:8081'; // Cross-origin: see optional PdfCorsConfig.java
-const STATUSES = ['CREATED','PICKED_UP','IN_TRANSIT','ARRIVED_AT_FACILITY','IN_DELIVERY','DELIVERED'];
-const $ = id => document.getElementById(id);
-const state = { page: 0, size: 10, totalPages: 0, shipmentId: null, jobs: [], shipmentSummaries: new Map(), polling: false };
-const escapeHtml = value => String(value ?? '—').replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
-const statusClass = value => value === 'COMPLETED' || value === 'DELIVERED' ? 'ok' : value === 'FAILED' ? 'bad' : ['RUNNING','IN_TRANSIT','IN_DELIVERY'].includes(value) ? 'warn' : '';
-const badge = value => `<span class="badge-soft ${statusClass(value)}">${escapeHtml(value)}</span>`;
-const uuid = value => `<span class="uuid">${escapeHtml(value)}</span>`;
-function alertBox(message, type='danger') { const el=$('alert'); el.className=`alert alert-${type}`; el.textContent=message; window.scrollTo({top:0,behavior:'smooth'}); }
-function clearAlert(){ $('alert').classList.add('d-none'); }
-function validUuid(value){ return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value); }
-async function request(path, options={}, base=SHIPMENT_API){
-  const response = await fetch(base + path, options);
-  const raw = await response.text(); let data = raw;
-  if (raw) { try { data = JSON.parse(raw); } catch { /* plain text response */ } }
-  if (!response.ok) {
-    const detail = typeof data === 'string' ? data : (data.detail || data.message || data.error || JSON.stringify(data));
-    throw new Error(`HTTP ${response.status} ${response.statusText}: ${detail}`);
-  }
-  return data;
+// Shipment Platform UI — no build tooling, no framework. Browser -> actual REST APIs.
+const API = Object.freeze({shipment:'', invoice:'http://localhost:8082', pdf:'http://localhost:8081', reports:'http://localhost:8083', notifications:'http://localhost:8084'});
+const STATUSES=['CREATED','PICKED_UP','IN_TRANSIT','ARRIVED_AT_FACILITY','IN_DELIVERY','DELIVERED'];
+const state={view:'shipments',page:0,size:10,totalPages:0,selectedShipment:null,currentInvoice:null,jobs:new Map(),poller:null};
+const $=id=>document.getElementById(id);
+const esc=value=>String(value??'—').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const uuid=v=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v||'').trim());
+const status=v=>`<span class="status status-${esc(v)}">${esc(String(v||'UNKNOWN').replaceAll('_',' '))}</span>`;
+const short=v=>v?String(v).slice(0,8)+'…'+String(v).slice(-4):'—';
+const date=v=>v?esc(String(v).replace('T',' ').slice(0,19)):'—';
+const field=(label,value)=>`<div class="detail-field"><small>${esc(label)}</small><strong>${esc(value)}</strong></div>`;
+const formValue=(f,name)=>String(new FormData(f).get(name)||'').trim();
+function alertMessage(message,kind='success'){$('alerts').innerHTML=`<div class="alert alert-${kind} alert-dismissible fade show toast-alert" role="alert">${esc(message)}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;}
+async function request(service,path,{method='GET',body,signal}={}){
+ const headers={Accept:'application/json'};
+ if(body!==undefined)headers['Content-Type']='application/json';
+ let response;
+ try{response=await fetch(API[service]+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),signal});}
+ catch(error){throw new Error(`${service} connection failed (${API[service]||location.origin}). ${error.message}. Check service and CORS.`)}
+ const text=await response.text();let data=null;
+ if(text){try{data=JSON.parse(text)}catch{data=text}}
+ if(!response.ok){let detail=typeof data==='string'?data:(data?.detail||data?.message||data?.error||'Request failed');throw new Error(`${response.status} ${response.statusText}: ${detail}`)}
+ return data;
 }
-const jsonOptions = (method, body) => ({method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-async function run(operation, successMessage) { clearAlert(); try { await operation(); if(successMessage) alertBox(successMessage,'success'); } catch(e) { console.error(e); alertBox(e.message.includes('Failed to fetch') ? `${e.message}. Check the service is running and (for PDF) that CORS is configured.` : e.message); } }
-function switchTab(tab){
-  document.querySelectorAll('[data-panel]').forEach(panel => {panel.hidden=panel.dataset.panel!==tab;});
-  document.querySelectorAll('[data-tab]').forEach(button=>button.classList.toggle('active',button.dataset.tab===tab));
-  if(tab==='statistics') loadStatistics();
-  if(tab==='invoices' && !$('invoiceRows').dataset.loaded) searchInvoices();
+function execute(fn){return async(...args)=>{try{await fn(...args)}catch(e){console.error(e);alertMessage(e.message,'danger')}}}
+function bindForm(id,fn){$(id).addEventListener('submit',e=>{e.preventDefault();execute(fn)(e)})}
+function selectView(view){state.view=view;document.querySelectorAll('.view').forEach(v=>v.classList.toggle('d-none',v.id!=='view-'+view));document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('page-title').textContent=({shipments:'Shipments',invoices:'Invoices',pdf:'PDF generation',reports:'Reports',notifications:'Notifications',tools:'Developer tools'})[view];execute(refresh)()}
+async function refresh(){if(state.view==='shipments')await Promise.all([loadShipments(),loadStats()]);if(state.view==='reports')await loadReports();if(state.view==='notifications')await loadNotifications();if(state.view==='pdf'&&$('pdf-shipment-id').value.trim())await loadPdfHistory()}
+async function loadShipments(){const data=await request('shipment',`/shipment/getShipmentListPage?page=${state.page}&size=${state.size}`);state.totalPages=data.totalPages||0;const rows=data.content||[];$('shipment-rows').innerHTML=rows.length?rows.map(s=>`<tr><td><div class="item-title">${esc(s.shipmentName)}</div></td><td>${esc(s.customerName||'Unassigned')}</td><td>${status(s.shipmentStatus)}</td><td><span class="cell-id" title="${esc(s.shipmentId)}">${esc(short(s.shipmentId))}</span></td><td><button class="btn btn-outline-primary btn-sm" data-action="open-shipment" data-id="${esc(s.shipmentId)}">Open</button></td></tr>`).join(''):'<tr><td colspan="5" class="muted-cell">No shipments found.</td></tr>';
+ $('pagination-info').textContent=`Page ${state.page+1} of ${Math.max(state.totalPages,1)} · ${data.totalElements??0} shipments`;$('prev-page').disabled=state.page===0;$('next-page').disabled=state.page+1>=state.totalPages;}
+async function loadStats(){const list=await request('shipment','/statistics/getShipmentsCountByStatus');let counts=Object.fromEntries(list.map(x=>[x.status,x.count]));$('metric-total').textContent=list.reduce((n,x)=>n+x.count,0);$('metric-transit').textContent=counts.IN_TRANSIT||0;$('metric-delivered').textContent=counts.DELIVERED||0;$('metric-created').textContent=counts.CREATED||0;}
+async function openShipment(id){if(!uuid(id))throw Error('Enter a valid shipment UUID');$('shipment-id').value=id;state.selectedShipment=id;const s=await request('shipment',`/shipment/getShipmentById/${encodeURIComponent(id)}`);const summary=`<div class="detail-grid">${field('Name',s.shipmentName)}${field('Status',s.shipmentStatus)}${field('Description',s.shipmentDescription)}${field('Shipment ID',s.shipmentId)}</div>`;
+ const options=STATUSES.map(x=>`<option value="${x}" ${x===s.shipmentStatus?'selected':''}>${x.replaceAll('_',' ')}</option>`).join('');
+ $('shipment-detail').innerHTML=`${summary}
+ <div class="row g-3"><div class="col-lg-6"><div class="operation-card"><h3>Update status</h3><form id="update-status-form"><select class="form-select mb-2" name="shipmentStatus">${options}</select><button class="btn btn-primary btn-sm">Save status</button></form></div></div>
+ <div class="col-lg-6"><div class="operation-card"><h3>Assign / change customer</h3><form id="update-customer-form"><input class="form-control mono mb-2" name="customerId" placeholder="Customer UUID" required><button class="btn btn-outline-primary btn-sm">Update customer</button></form></div></div>
+ <div class="col-lg-6"><div class="operation-card"><h3>Update current location</h3><form id="update-location-form"><input class="form-control mono mb-2" name="locationId" placeholder="Location UUID" required><button class="btn btn-outline-primary btn-sm">Update location</button></form></div></div>
+ <div class="col-lg-6"><div class="operation-card"><h3>Invoice</h3><p>Creates or retries the initial invoice via shipment-service → invoice-service. Customer must be assigned.</p><button class="btn btn-outline-primary btn-sm" id="create-invoice-btn">Create shipment invoice</button><div id="created-invoice" class="small-note mt-2"></div></div></div>
+ <div class="col-lg-6"><div class="operation-card"><h3>Add comment</h3><form id="add-comment-form"><textarea name="commentText" rows="2" maxlength="255" class="form-control mb-2" placeholder="Comment text" required></textarea><input name="addedBy" class="form-control mb-2" placeholder="Added by (optional)"><label class="form-check mb-2"><input name="priorityAction" class="form-check-input" type="checkbox"><span class="form-check-label">Priority action</span></label><button class="btn btn-outline-primary btn-sm">Add comment</button></form></div></div>
+ <div class="col-lg-6"><div class="operation-card"><h3>PDF data & comments</h3><p>The PDF-data endpoint also provides shipment comments. It currently requires non-null customer and location associations in the backend.</p><button class="btn btn-outline-secondary btn-sm" id="load-pdf-data-btn">Load PDF data</button><div id="pdf-data-result" class="mt-3"></div></div></div>
+ </div>`;
+ bindForm('update-status-form',async e=>{await request('shipment',`/shipment/${id}/status`,{method:'PATCH',body:{shipmentStatus:formValue(e.target,'shipmentStatus')}});alertMessage('Status updated');await openShipment(id);await Promise.all([loadShipments(),loadStats()])});
+ for(const [formId,path,key] of [['update-customer-form','customer','customerId'],['update-location-form','current-location','locationId']])bindForm(formId,async e=>{const value=formValue(e.target,key);if(!uuid(value))throw Error('Enter a valid UUID');await request('shipment',`/shipment/${id}/${path}`,{method:'PATCH',body:{[key]:value}});alertMessage(`${path} updated`)});
+ bindForm('add-comment-form',async e=>{const f=e.target;const body={commentText:formValue(f,'commentText'),addedBy:formValue(f,'addedBy')||null,priorityAction:new FormData(f).has('priorityAction')};await request('shipment',`/comment/addShipmentComment/${id}`,{method:'POST',body});alertMessage('Comment added');f.reset()});
+ $('create-invoice-btn').onclick=()=>execute(async()=>{const result=await request('shipment',`/shipments/${id}/invoice`,{method:'POST'});$('created-invoice').innerHTML=`Invoice UUID: <code>${esc(result?.invoiceId)}</code>`;if(result?.invoiceId){$('invoice-id').value=result.invoiceId}alertMessage('Invoice creation request completed')})();
+ $('load-pdf-data-btn').onclick=()=>execute(async()=>{const data=await request('shipment',`/shipment/getShipmentPdfDataByShipmentId/${id}`);const comments=data.shipmentComments||[];$('pdf-data-result').innerHTML=`<div class="small-note mb-2">${esc(data.customerName)} · ${esc(data.currentLocation)} → ${esc(data.destinationLocation)}</div><div class="small-note mb-2">${comments.length} comment(s)</div>${comments.map(c=>`<div class="border rounded p-2 mb-2"><span class="small">${esc(c.commentText)} ${c.priorityAction?'⚑':''}</span><div class="d-flex justify-content-between align-items-center mt-1"><small class="text-muted">${esc(c.addedBy||'Unknown')} · ${date(c.commentDate)}</small><button class="btn btn-outline-danger btn-sm" data-action="delete-comment" data-id="${esc(c.commentId)}">Delete</button></div></div>`).join('')}`;})();
 }
-async function loadShipments(){
-  const data = await request(`/shipment/getShipmentListPage?page=${state.page}&size=${state.size}`);
-  const records = data.content || [];
-  records.forEach(item=>state.shipmentSummaries.set(item.shipmentId,item));
-  state.totalPages=data.totalPages || 0;
-  $('shipmentRows').innerHTML = records.length ? records.map(item=>`<tr><td><strong>${escapeHtml(item.shipmentName)}</strong></td><td>${escapeHtml(item.customerName)}</td><td>${badge(item.shipmentStatus)}</td><td>${uuid(item.shipmentId)}</td><td><button class="btn btn-sm btn-outline-primary" data-open-shipment="${escapeHtml(item.shipmentId)}">Open</button></td></tr>`).join('') : '<tr><td colspan="5" class="muted">No shipments found.</td></tr>';
-  $('pagingInfo').textContent=`Page ${state.totalPages ? state.page+1 : 0} of ${state.totalPages} · ${data.totalElements ?? records.length} total`;
-  $('prevPage').disabled=state.page===0;
-  $('nextPage').disabled=state.page+1>=state.totalPages;
-  $('connection').textContent='online';
-}
-async function openShipment(id){
-  if(!validUuid(id)) throw new Error('Enter a valid shipment UUID.');
-  state.shipmentId=id;
-  let details;
-  try { details=await request(`/shipment/getShipmentById/${encodeURIComponent(id)}`); }
-  catch(err) {
-    const summary=state.shipmentSummaries.get(id);
-    if(!summary) throw err;
-    details={...summary,shipmentDescription:null};
-    console.warn('Shipment details endpoint failed; showing list DTO fallback:',err);
-    alertBox('Details endpoint failed (repository DTO projection mismatch). Showing cached list data; status changes still work.','warning');
-  }
-  if(!details) throw new Error('Shipment details endpoint returned an empty response.');
-  $('selectedShipmentTitle').textContent=details.shipmentName || '';
-  $('shipmentDetail').innerHTML=`<dl class="row mb-0"><dt class="col-sm-3">Name</dt><dd class="col-sm-9">${escapeHtml(details.shipmentName)}</dd><dt class="col-sm-3">ID</dt><dd class="col-sm-9">${uuid(details.shipmentId || id)}</dd><dt class="col-sm-3">Status</dt><dd class="col-sm-9">${badge(details.shipmentStatus)}</dd><dt class="col-sm-3">Description</dt><dd class="col-sm-9">${escapeHtml(details.shipmentDescription)}</dd></dl>`;
-  $('newStatus').value=details.shipmentStatus || 'CREATED';
-  $('pdfShipmentId').value=id;
-  // PDF data is the only existing endpoint returning comment DTOs; it may fail for incomplete shipments.
-  try {
-    const pdfData=await request(`/shipment/getShipmentPdfDataByShipmentId/${encodeURIComponent(id)}`);
-    renderComments(pdfData.shipmentComments || []);
-  } catch (err) {
-    $('commentsList').innerHTML=`<p class="text-warning mb-1">Comments could not be loaded via the PDF-data endpoint.</p><p class="small muted mb-0">${escapeHtml(err.message)}. This endpoint dereferences customer and both locations, which can be null for CREATED shipments.</p>`;
-  }
-}
-function renderComments(comments){
-  $('commentsList').innerHTML=comments.length ? comments.map(c=>`<div class="comment-entry"><div class="d-flex justify-content-between gap-2"><strong>${escapeHtml(c.addedBy || 'Anonymous')}</strong><span class="small muted">${escapeHtml(c.commentDate || '')}</span></div><div class="mt-1">${escapeHtml(c.commentText)}</div><div class="mt-2 d-flex align-items-center gap-2">${c.priorityAction ? badge('PRIORITY') : ''}<button type="button" class="btn btn-sm btn-outline-danger" data-delete-comment="${escapeHtml(c.commentId)}">Delete</button></div></div>`).join('') : '<p class="muted mb-0">No comments.</p>';
-}
-async function searchInvoices(){
-  const ids=['invoiceNumber','shipmentName','customerName','invoiceStatus','invoiceType'];
-  const fieldIds=['filterInvoiceNumber','filterShipmentName','filterCustomerName','filterInvoiceStatus','filterInvoiceType'];
-  const criteria=Object.fromEntries(ids.map((key,index)=>[key,$(fieldIds[index]).value.trim() || null]));
-  const data=await request('/api/invoices/search',jsonOptions('POST',criteria));
-  $('invoiceRows').dataset.loaded='true';
-  $('invoiceRows').innerHTML=data.length ? data.map(i=>`<tr><td><strong>${escapeHtml(i.invoiceNumber)}</strong></td><td>${escapeHtml(i.shipmentName)}</td><td>${escapeHtml(i.customerName)}</td><td>${badge(i.invoiceStatus)}</td><td>${escapeHtml(i.invoiceType)}</td></tr>`).join('') : '<tr><td colspan="5" class="muted">No matching invoices.</td></tr>';
-}
-async function loadInvoice(){
-  const id=$('invoiceId').value.trim();if(!validUuid(id))throw new Error('Enter a valid invoice UUID.');
-  const i=await request(`/api/invoices/${id}`);
-  const fields=[['Invoice #',i.invoiceNumber],['Shipment',i.shipment?.shipmentName],['Customer',i.customer?.customerName],['Billing address',i.billingAddress],['Rate / km',i.ratePerKm],['Kilometers',i.kilometersSpent],['Taxes',i.taxes],['Additional charges',i.additionalCharges],['Total',i.totalAmount],['Status',i.invoiceStatus],['Type',i.invoiceType],['Issued at',i.issuedAt],['Issued by',i.issuedBy]];
-  $('invoiceDetail').innerHTML=`<div class="row">${fields.map(([name,val])=>`<div class="col-md-6 mb-2"><div class="small muted">${escapeHtml(name)}</div><strong>${escapeHtml(val)}</strong></div>`).join('')}</div>`;
-}
-async function loadStatistics(){
-  const data=await request('/statistics/getShipmentsCountByStatus');
-  const lookup=new Map(data.map(x=>[x.status,x.count]));
-  $('statsCards').innerHTML=STATUSES.map(status=>`<div class="col-sm-6 col-lg-4"><div class="card h-100"><div class="card-body"><div class="muted small mb-2">${escapeHtml(status.replaceAll('_',' '))}</div><div class="stat-value">${lookup.get(status) ?? 0}</div></div></div></div>`).join('');
-}
-async function startPdf(id){
-  if(!validUuid(id))throw new Error('Enter a valid shipment UUID.');
-  const jobId=await request(`/pdf/generatePdfAsync/${id}`,{method:'POST'},PDF_API);
-  if(typeof jobId !== 'string' || !validUuid(jobId)) throw new Error('Unexpected job ID returned: '+JSON.stringify(jobId));
-  state.jobs.unshift({id:jobId, shipmentId:id, status:'PENDING'});
-  drawJobs();
-  switchTab('pdf');
-}
-function drawJobs(){
-  $('jobRows').innerHTML=state.jobs.length ? state.jobs.map(j=>`<tr><td>${uuid(j.id)}</td><td>${uuid(j.shipmentId)}</td><td>${badge(j.status)}</td></tr>`).join('') : '<tr><td colspan="3" class="muted">No jobs submitted yet.</td></tr>';
-}
-async function pollJobs(){
-  if(state.polling) return;state.polling=true;
-  try {
-    await Promise.all(state.jobs.filter(j=>!['COMPLETED','FAILED'].includes(j.status)).map(async j=>{
-      try { const result=await request(`/pdf/status/${j.id}`,{},PDF_API); j.status=result || 'UNKNOWN'; }
-      catch(e) {j.status='ERROR';console.warn('Unable to poll PDF job:',e);}
-    }));
-    drawJobs();
-  } finally {state.polling=false;}
-}
-function bind(){
-  document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>run(()=>switchTab(btn.dataset.tab))));
-  $('newStatus').innerHTML=STATUSES.map(s=>`<option value="${s}">${s.replaceAll('_',' ')}</option>`).join('');
-  $('refreshShipments').addEventListener('click',()=>run(loadShipments));
-  $('pageSize').addEventListener('change',()=>run(async()=>{state.size=Number($('pageSize').value);state.page=0;await loadShipments();}));
-  $('prevPage').addEventListener('click',()=>run(async()=>{state.page--;await loadShipments();}));
-  $('nextPage').addEventListener('click',()=>run(async()=>{state.page++;await loadShipments();}));
-  $('shipmentRows').addEventListener('click',e=>{const btn=e.target.closest('[data-open-shipment]');if(btn) run(()=>openShipment(btn.dataset.openShipment));});
-  $('lookupShipment').addEventListener('click',()=>run(()=>openShipment($('shipmentIdLookup').value.trim())));
-  $('statusForm').addEventListener('submit',e=>{e.preventDefault();run(async()=>{if(!state.shipmentId)throw new Error('Select a shipment first.');await request(`/shipment/updateShipmentStatus/${state.shipmentId}`,jsonOptions('PATCH',$('newStatus').value));await loadShipments();await openShipment(state.shipmentId);},'Status updated.');});
-  $('createForm').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const response=await request('/shipment/createNewShipment',jsonOptions('POST',{shipmentName:$('newShipmentName').value.trim()}));$('newShipmentName').value='';state.page=0;await loadShipments();alertBox(String(response),'success');});});
-  $('commentForm').addEventListener('submit',e=>{e.preventDefault();run(async()=>{if(!state.shipmentId)throw new Error('Select a shipment first.');const body={commentText:$('commentText').value.trim(),addedBy:$('commentAuthor').value.trim()||null,priorityAction:$('priorityAction').checked};await request(`/comment/addShipmentComment/${state.shipmentId}`,jsonOptions('POST',body));$('commentText').value='';await openShipment(state.shipmentId);},'Comment added.');});
-  $('commentsList').addEventListener('click',e=>{const btn=e.target.closest('[data-delete-comment]');if(!btn)return;if(!confirm('Delete this comment?'))return;run(async()=>{await request(`/comment/deleteShipmentComment/${btn.dataset.deleteComment}`,{method:'DELETE'});await openShipment(state.shipmentId);},'Comment deleted.');});
-  $('invoiceSearchForm').addEventListener('submit',e=>{e.preventDefault();run(searchInvoices);});
-  $('loadInvoice').addEventListener('click',()=>run(loadInvoice));
-  $('invoiceUpdateForm').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const id=$('invoiceId').value.trim();if(!validUuid(id))throw new Error('Enter a valid invoice UUID.');const amount=Number($('invoiceAmount').value);if(!Number.isFinite(amount)||amount<0)throw new Error('Invalid amount.');await request(`/api/invoices/${id}/${$('invoiceField').value}`,jsonOptions('PATCH',amount));await loadInvoice();},'Invoice updated.');});
-  $('refreshStats').addEventListener('click',()=>run(loadStatistics));
-  $('pdfForm').addEventListener('submit',e=>{e.preventDefault();run(()=>startPdf($('pdfShipmentId').value.trim()));});
-  $('pollNow').addEventListener('click',()=>run(pollJobs));
-  $('kafkaForm').addEventListener('submit',e=>{e.preventDefault();run(()=>request(`/kafka/send?message=${encodeURIComponent($('kafkaMessage').value)}`,{method:'POST'}),'Kafka test message submitted.');});
-  setInterval(()=>{if(state.jobs.some(j=>['PENDING','RUNNING'].includes(j.status)))pollJobs();},2500);
-}
-bind();
-run(loadShipments);
+async function createShipment(e){const f=e.target;const body={shipmentName:formValue(f,'shipmentName'),shippingType:formValue(f,'shippingType'),shipmentDescription:formValue(f,'shipmentDescription')||null};for(const k of ['customerId','currentLocationId','destinationLocationId','assignedCourierId']){const v=formValue(f,k);if(v&&!uuid(v))throw Error(`Invalid ${k} UUID`);body[k]=v||null}for(const k of ['weightKg','declaredValue']){const v=formValue(f,k);body[k]=v===''?null:Number(v)}const result=await request('shipment','/shipment',{method:'POST',body});bootstrap.Modal.getInstance($('createModal'))?.hide();f.reset();alertMessage(`Created shipment ${result.shipmentName} (${result.shipmentId})`);state.page=0;await Promise.all([loadShipments(),loadStats()]);await openShipment(result.shipmentId)}
+async function searchInvoices(e){const f=e.target;const keys=['invoiceNumber','shipmentName','customerName','invoiceStatus','invoiceType'];const body={};for(const k of keys){const v=formValue(f,k);if(v)body[k]=v}const list=await request('invoice','/api/invoices/search',{method:'POST',body});$('invoice-rows').innerHTML=list.length?list.map(i=>`<tr><td>${esc(i.invoiceNumber)}</td><td>${esc(i.shipmentName)}</td><td>${esc(i.customerName)}</td><td>${status(i.invoiceStatus)}</td><td>${esc(i.invoiceType)}</td></tr>`).join(''):'<tr><td colspan="5" class="muted-cell">No invoices matched.</td></tr>';alertMessage(`${list.length} invoices found`)}
+async function loadInvoice(){const id=$('invoice-id').value.trim();if(!uuid(id))throw Error('Enter a valid invoice UUID');const d=await request('invoice',`/api/invoices/${id}`);state.currentInvoice=id;$('invoice-detail').innerHTML=`<div class="detail-grid">${field('Invoice number',d.invoiceNumber)}${field('Shipment',d.shipmentName)}${field('Customer',d.customerName)}${field('Status',d.invoiceStatus)}${field('Type',d.invoiceType)}${field('Rate / km',d.ratePerKm)}${field('Kilometers',d.kilometersSpent)}${field('Taxes',d.taxes)}${field('Additional charges',d.additionalCharges)}${field('Total amount',d.totalAmount)}${field('Issued at',d.issuedAt)}${field('Issued by',d.issuedBy)}${field('Billing address',d.billingAddress)}</div><div class="operation-card"><h3>Update invoice amounts</h3><p>Each PATCH sends a raw JSON number, matching the current BigDecimal controller signature.</p><form id="invoice-update-form" class="row g-2"><div class="col-md-5"><select name="attribute" class="form-select"><option value="rate-per-km">Rate per km</option><option value="taxes">Taxes</option><option value="additional-charges">Additional charges</option></select></div><div class="col-md-4"><input name="amount" type="number" step="0.01" min="0" class="form-control" placeholder="Amount" required></div><div class="col-md-3"><button class="btn btn-primary w-100">Update</button></div></form></div>`;
+ bindForm('invoice-update-form',async e=>{const f=e.target;const amount=formValue(f,'amount');if(!/^(?:\d+)(?:\.\d+)?$/.test(amount))throw Error('Enter a nonnegative amount');const attribute=formValue(f,'attribute');await request('invoice',`/api/invoices/${id}/${attribute}`,{method:'PATCH',body:Number(amount)});alertMessage('Invoice updated');await loadInvoice()})}
+function renderJobs(){const list=[...state.jobs.values()].sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));$('pdf-jobs').innerHTML=list.length?list.map(j=>`<div class="job-row"><div class="d-flex align-items-center justify-content-between flex-wrap gap-2"><div><strong class="mono">${esc(j.jobId)}</strong><div class="small-note">Shipment: ${esc(short(j.shipmentId))} · Created: ${date(j.createdAt)}</div></div><div class="d-flex align-items-center gap-2">${status(j.status)}<button class="btn btn-outline-secondary btn-sm" data-action="refresh-job" data-id="${esc(j.jobId)}">Refresh</button>${j.status==='COMPLETED'?`<button class="btn btn-primary btn-sm" data-action="download-job" data-id="${esc(j.jobId)}">Download</button>`:''}</div></div>${j.errorMessage?`<div class="text-danger small mt-2">${esc(j.errorMessage)}</div>`:''}</div>`).join(''):'<div class="empty-state">No jobs loaded.</div>'}
+async function loadJob(jobId){if(!uuid(jobId))throw Error('Invalid PDF job UUID');const job=await request('pdf',`/pdf/jobs/${jobId}`);if(!job||!job.jobId)throw Error('Job not found');state.jobs.set(job.jobId,job);renderJobs();return job}
+async function loadPdfHistory(){const id=$('pdf-shipment-id').value.trim();if(!uuid(id))throw Error('Enter a valid shipment UUID');const jobs=await request('pdf',`/pdf/shipments/${id}/jobs`);for(const job of jobs)state.jobs.set(job.jobId,job);renderJobs()}
+async function startPdf(){const id=$('pdf-shipment-id').value.trim();if(!uuid(id))throw Error('Enter a valid shipment UUID');const jobId=await request('pdf',`/pdf/generatePdfAsync/${id}`,{method:'POST'});$('pdf-job-id').value=jobId;alertMessage(`PDF job started: ${jobId}`);await loadJob(jobId);startPolling()}
+function startPolling(){if(state.poller)return;state.poller=setInterval(async()=>{const pending=[...state.jobs.values()].filter(j=>['PENDING','RUNNING'].includes(j.status));if(!pending.length){clearInterval(state.poller);state.poller=null;return}await Promise.all(pending.map(j=>loadJob(j.jobId).catch(console.error)))},2500)}
+async function downloadJob(id){const response=await fetch(`${API.pdf}/pdf/download/${encodeURIComponent(id)}`);if(!response.ok)throw Error(`PDF download failed: ${response.status} ${await response.text()}`);const blob=await response.blob();const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=`shipment-${id}.pdf`;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
+async function loadReports(){const [counts,shipments]=await Promise.all([request('reports','/api/reports/shipments/status-counts'),request('reports','/api/reports/shipments')]);const max=Math.max(1,...counts.map(c=>Number(c.count)));$('report-counts').innerHTML=counts.length?counts.map(c=>`<div class="report-count"><div>${status(c.status||c.shipmentStatus)}</div><div class="data-bar"><div class="data-fill" style="width:${Math.max(0,Math.min(100,Number(c.count)/max*100))}%"></div></div><strong>${esc(c.count)}</strong></div>`).join(''):'<div class="small-note">No report projection data yet.</div>';$('report-rows').innerHTML=shipments.length?shipments.map(s=>`<tr><td><strong>${esc(s.shipmentName)}</strong><div class="cell-id">${esc(short(s.shipmentId))}</div></td><td>${status(s.shipmentStatus)}</td><td>${date(s.createdAt)}</td><td>${date(s.statusChangedAt)}</td></tr>`).join(''):'<tr><td colspan="4" class="muted-cell">No reports yet.</td></tr>'}
+async function loadNotifications(){const list=await request('notifications','/api/notifications');$('notification-rows').innerHTML=list.length?list.map(n=>`<tr><td>${date(n.createdAt)}</td><td>${esc(n.eventType)}</td><td class="cell-id" title="${esc(n.referenceId)}">${esc(short(n.referenceId))}</td><td>${esc(n.message)}</td></tr>`).join(''):'<tr><td colspan="4" class="muted-cell">No notifications yet.</td></tr>'}
+async function sendKafka(){const message=$('kafka-message').value.trim();if(!message)throw Error('Enter a message');await request('shipment',`/kafka/send?message=${encodeURIComponent(message)}`,{method:'POST'});alertMessage('Test message submitted to Kafka producer')}
+function register(){document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>selectView(b.dataset.view));$('refresh-btn').onclick=()=>execute(refresh)();$('prev-page').onclick=()=>execute(async()=>{state.page--;await loadShipments()})();$('next-page').onclick=()=>execute(async()=>{state.page++;await loadShipments()})();$('page-size').onchange=()=>execute(async()=>{state.page=0;state.size=Number($('page-size').value);await loadShipments()})();bindForm('shipment-lookup',()=>openShipment($('shipment-id').value.trim()));bindForm('create-shipment-form',createShipment);bindForm('invoice-search',searchInvoices);bindForm('invoice-lookup',loadInvoice);bindForm('pdf-shipment-form',startPdf);$('pdf-history-btn').onclick=()=>execute(loadPdfHistory)();bindForm('pdf-job-lookup',()=>loadJob($('pdf-job-id').value.trim()));bindForm('kafka-form',sendKafka);
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const id=b.dataset.id;switch(b.dataset.action){case'open-shipment':execute(()=>openShipment(id))();break;case'delete-comment':execute(async()=>{if(!confirm('Delete this comment?'))return;await request('shipment',`/comment/deleteShipmentComment/${id}`,{method:'DELETE'});alertMessage('Comment deleted');$('load-pdf-data-btn')?.click()})();break;case'refresh-job':execute(()=>loadJob(id))();break;case'download-job':execute(()=>downloadJob(id))();break;}});
+ $('endpoints').innerHTML=Object.entries(API).map(([key,url])=>`<div class="d-flex justify-content-between border-bottom py-2"><strong>${esc(key)}</strong><code>${esc(url||location.origin)}</code></div>`).join('')+'<p class="small-note mt-3">All requests use real endpoints. Cross-origin services need local CORS configuration.</p>';
+ execute(refresh)();}
+register();

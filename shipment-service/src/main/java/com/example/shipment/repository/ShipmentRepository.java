@@ -26,7 +26,7 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
                     s.shipmentStatus,
                     s.shipmentDescription
                 )
-                from Shipment s
+                from Shipment s WHERE s.shipmentId = :shipmentId
             """)
     ShipmentDetailsDto findDtoByShipmentId(UUID shipmentId);
 
