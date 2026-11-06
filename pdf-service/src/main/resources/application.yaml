@@ -1,11 +1,16 @@
 server:
   port: 8081
+
 app:
   config:
     threads: 3
+  pdf:
+    output-directory: ${PDF_OUTPUT_DIRECTORY:./generated-pdfs}
+
 services:
   shipment:
-    base-url: http://localhost:8080
+    base-url: ${SHIPMENT_SERVICE_URL:http://localhost:8080}
+
 spring:
   application:
     name: pdf-service
@@ -14,19 +19,16 @@ spring:
       connect-timeout: 2s
       read-timeout: 5s
   datasource:
-    url: jdbc:postgresql://localhost:5432/shipment_db
+    url: ${PDF_DB_URL:jdbc:postgresql://localhost:5432/pdf_db}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:admin}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
     open-in-view: false
-    properties:
-      hibernate:
-        format_sql: true
-
   kafka:
-    bootstrap-servers: localhost:9092
-
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
