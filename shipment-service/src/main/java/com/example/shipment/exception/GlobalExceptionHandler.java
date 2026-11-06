@@ -8,48 +8,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ShipmentNotFoundException.class)
-    public ResponseEntity<String> handleShipmentNotFound(
-            ShipmentNotFoundException e) {
+    @ExceptionHandler({
+            ShipmentNotFoundException.class,
+            ShipmentCommentNotFoundException.class,
+            CustomerNotFoundException.class,
+            CourierNotFoundException.class,
+            LocationNotFoundException.class
+    })
+    public ResponseEntity<String> handleNotFound(RuntimeException e) {
 
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(e.getMessage());
-    }
-
-    @ExceptionHandler(ShipmentCommentNotFoundException.class)
-    public ResponseEntity<String> handleShipmentCommentNotFound(
-            ShipmentCommentNotFoundException e) {
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(e.getMessage());
-    }
-
-    @ExceptionHandler(CourierNotFoundException.class)
-    public ResponseEntity<String> handleCourierNotFound(
-            CourierNotFoundException e) {
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(e.getMessage());
-    }
-
-    @ExceptionHandler(CustomerNotFoundException.class)
-    public ResponseEntity<String> handleCustomerNotFound(
-            CustomerNotFoundException e) {
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(e.getMessage());
-    }
-
-    @ExceptionHandler(LocationNotFoundException.class)
-    public ResponseEntity<String> handleLocationNotFound(
-            LocationNotFoundException e) {
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(e.getMessage());
     }
 
