@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Notifications" type="DatabaseScript">
+    <script-file value="$PROJECT_DIR$/notification-service/src/main/resources/sql/notification-database.sql" />
+    <script-mode>FILE</script-mode>
+    <data-source id="8efc845c-6e16-4dad-b78b-1dcf199b9792" namespace="database/&quot;notification_db&quot;" />
+    <method v="2" />
+  </configuration>
+</component>

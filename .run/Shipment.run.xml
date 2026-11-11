@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Shipment" type="DatabaseScript">
+    <script-file value="$PROJECT_DIR$/shipment-service/src/main/resources/sql/shipment-database.sql" />
+    <script-file value="$PROJECT_DIR$/shipment-service/src/main/resources/sql/shipment-sample_data.sql" />
+    <script-mode>FILE</script-mode>
+    <data-source id="8efc845c-6e16-4dad-b78b-1dcf199b9792" namespace="database/&quot;shipment_db&quot;" />
+    <method v="2" />
+  </configuration>
+</component>

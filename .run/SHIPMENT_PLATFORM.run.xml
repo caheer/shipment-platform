@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SHIPMENT_PLATFORM" type="CompoundRunConfigurationType">
+    <toRun name="InvoiceServiceApplication" type="SpringBootApplicationConfigurationType" />
+    <toRun name="NotificationServiceApplication" type="SpringBootApplicationConfigurationType" />
+    <toRun name="PdfServiceApplication" type="SpringBootApplicationConfigurationType" />
+    <toRun name="ReportsServiceApplication" type="SpringBootApplicationConfigurationType" />
+    <toRun name="ShipmentServiceApplication" type="SpringBootApplicationConfigurationType" />
+    <method v="2" />
+  </configuration>
+</component>

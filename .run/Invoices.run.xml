@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Invoices" type="DatabaseScript">
+    <script-file value="$PROJECT_DIR$/invoice-service/src/main/resources/sql/invoice-database.sql" />
+    <script-file value="$PROJECT_DIR$/invoice-service/src/main/resources/sql/invoice-sample-data.sql" />
+    <script-mode>FILE</script-mode>
+    <data-source id="8efc845c-6e16-4dad-b78b-1dcf199b9792" namespace="database/&quot;invoice_db&quot;" />
+    <method v="2" />
+  </configuration>
+</component>

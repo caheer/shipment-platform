@@ -21,4 +21,10 @@ public class ShipmentInvoiceController {
     public ResponseEntity<InvoiceResponseDto> createShipmentInvoice(@PathVariable UUID shipmentId) {
         return ResponseEntity.ok(shipmentInvoiceService.createShipmentInvoice(shipmentId));
     }
+
+    @PostMapping("/{shipmentId}/invoice/revisions/{revisionNumber}")
+    public ResponseEntity<InvoiceResponseDto> createShipmentInvoiceRevision(
+            @PathVariable UUID shipmentId, @PathVariable int revisionNumber) {
+        return ResponseEntity.ok(shipmentInvoiceService.createShipmentInvoice(shipmentId, revisionNumber));
+    }
 }

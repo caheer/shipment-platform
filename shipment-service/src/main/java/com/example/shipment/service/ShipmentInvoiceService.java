@@ -12,6 +12,8 @@ import com.example.shipment.repository.ShipmentInvoiceRevisionRepository;
 import com.example.shipment.repository.ShipmentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -36,9 +38,16 @@ public class ShipmentInvoiceService {
     }
 
     public InvoiceResponseDto createShipmentInvoice(UUID shipmentId) {
+        return createShipmentInvoice(shipmentId, 1);
+    }
+
+    public InvoiceResponseDto createShipmentInvoice(UUID shipmentId, int revisionNumber) {
+        if (revisionNumber < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Revision number must be positive");
+        }
         // This transaction commits BEFORE the remote HTTP call.
         CreateInvoiceRequestDto request = Objects.requireNonNull(
-                transactionTemplate.execute(status -> prepareInitialInvoice(shipmentId)));
+                transactionTemplate.execute(status -> prepareInvoice(shipmentId, revisionNumber)));
 
         // If the call fails, the revision stays PENDING for a future attempt.
         // The invoice-service endpoint must be idempotent for the revision UUID.
@@ -58,17 +67,31 @@ public class ShipmentInvoiceService {
         return response;
     }
 
-    private CreateInvoiceRequestDto prepareInitialInvoice(UUID shipmentId) {
-        Shipment shipment = shipmentRepository.findShipmentWithCustomerData(shipmentId)
+    private CreateInvoiceRequestDto prepareInvoice(UUID shipmentId, int revisionNumber) {
+        // Serialize revision allocation for this shipment, including the first revision.
+        // The lock is released before making the HTTP request.
+        Shipment shipment = shipmentRepository.findShipmentForInvoiceCreation(shipmentId)
                 .orElseThrow(() -> new ShipmentNotFoundException(shipmentId));
 
         Customer customer = Objects.requireNonNull(shipment.getCustomer(),
                 "Shipment must have a customer before invoicing");
 
         ShipmentInvoiceRevision revision = revisionRepository
-                .findByShipment_ShipmentIdAndRevisionNumber(shipmentId, 1)
-                .orElseGet(() -> revisionRepository.save(
-                        new ShipmentInvoiceRevision(UUID.randomUUID(), shipment, 1)));
+                .findByShipment_ShipmentIdAndRevisionNumber(shipmentId, revisionNumber)
+                .orElseGet(() -> {
+                    if (revisionNumber > 1) {
+                        ShipmentInvoiceRevision previous = revisionRepository
+                                .findByShipment_ShipmentIdAndRevisionNumber(shipmentId, revisionNumber - 1)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
+                                        "Create the previous invoice revision first"));
+                        if (previous.getCreationStatus() != InvoiceCreationStatus.COMPLETED) {
+                            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                                    "Complete the previous invoice revision before creating another");
+                        }
+                    }
+                    return revisionRepository.save(
+                            new ShipmentInvoiceRevision(UUID.randomUUID(), shipment, revisionNumber));
+                });
 
         return new CreateInvoiceRequestDto(
                 shipment.getShipmentId(),

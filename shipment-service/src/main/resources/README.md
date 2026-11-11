@@ -29,7 +29,7 @@ Bootstrap CSS/JS loads from a CDN, so an Internet connection is needed for the s
 2. `ShipmentService.getShipmentPdfDataByShipmentId()` directly calls getters on customer/current/destination associations. For shipments where they are null (including some newly created ones), this results in an error until the backend handles absent relationships. Comment display depends on this endpoint.
 3. No REST list endpoints for customers, locations, and couriers exist in the snapshot. The create/update UI therefore takes UUIDs rather than offering dropdowns; the SQL sample data includes usable IDs.
 4. Invoice search `InvoiceSearchItemDto` has no `invoiceId`. Use the invoice UUID returned by `POST /shipments/{shipmentId}/invoice` or enter a known UUID.
-5. Shipment invoice creation currently prepares/retries revision **1**; the frontend does not claim to support creating arbitrary revision numbers.
+5. Shipment invoice creation supports sequential revisions. `POST /shipments/{shipmentId}/invoice` creates/retries revision **1**. `POST /shipments/{shipmentId}/invoice/revisions/{revisionNumber}` creates/retries a specific revision using current shipment/customer data. Use revision **2**, then **3**, and so on; the preceding revision must be completed (otherwise HTTP 409). Retrying the same number reuses the revision UUID and invoice-service returns the existing invoice. Nonpositive numbers return HTTP 400. Revisions represent separate invoices; no amounts are copied from the preceding invoice. Concurrent allocation is serialized by a short shipment row lock; HTTP runs after releasing the lock. Concurrent remote requests for the same revision still rely on invoice-service idempotency; its existing check-then-insert can return a conflict/error during a race, in which case retry the same revision number.
 6. Reports and notifications represent Kafka projections and may be empty until events have been processed. Creating a shipment may not yet emit every event needed by report-service: inspect your producers and listeners.
 7. No authentication is implemented in this local test UI. Do not expose it publicly or use the permissive CORS configuration for production.
 8. PDF downloads use a browser blob, so the user can save the file; the server-side output path is not exposed as a public static directory.
@@ -47,6 +47,7 @@ Bootstrap CSS/JS loads from a CDN, so an Internet connection is needed for the s
 | shipment | `/comment/addShipmentComment/{id}` | POST |
 | shipment | `/comment/deleteShipmentComment/{id}` | DELETE |
 | shipment | `/shipments/{id}/invoice` | POST |
+| shipment | `/shipments/{id}/invoice/revisions/{revisionNumber}` | POST |
 | shipment | `/statistics/getShipmentsCountByStatus` | GET |
 | invoice | `/api/invoices/search` | POST |
 | invoice | `/api/invoices/{invoiceId}` | GET |

@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="CREATE SHIPMENT DBS" type="CompoundRunConfigurationType">
+    <toRun name="Create dbs" type="DatabaseScript" />
+    <toRun name="Invoices" type="DatabaseScript" />
+    <toRun name="Notifications" type="DatabaseScript" />
+    <toRun name="Reports" type="DatabaseScript" />
+    <toRun name="Shipment" type="DatabaseScript" />
+    <method v="2" />
+  </configuration>
+</component>
