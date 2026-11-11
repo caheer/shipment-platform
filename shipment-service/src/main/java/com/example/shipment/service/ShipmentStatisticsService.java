@@ -16,22 +16,32 @@ public class ShipmentStatisticsService {
 
     private final ShipmentRepository shipmentRepository;
 
-    public ShipmentStatisticsService(ShipmentRepository shipmentRepository) {
+    public ShipmentStatisticsService(
+            ShipmentRepository shipmentRepository) {
         this.shipmentRepository = shipmentRepository;
     }
 
-
     @Transactional
     public List<ShipmentStatusCountDto> getShipmentsStatusCount() {
+
         List<Shipment> shipmentList = shipmentRepository.findAll();
+
         if (shipmentList.isEmpty()) {
             return List.of();
-        } else {
-            Map<ShipmentStatus, Long> shipmentCountByStatus = shipmentList.stream().collect(Collectors.groupingBy(shipment -> shipment.getShipmentStatus(), Collectors.counting()));
-            List<ShipmentStatusCountDto> shipmentStatusCountDtos = shipmentCountByStatus.entrySet().stream().map(entry -> new ShipmentStatusCountDto(entry.getKey(), entry.getValue().longValue())).toList();
-            return shipmentStatusCountDtos;
-
         }
+
+        Map<ShipmentStatus, Long> counts =
+                shipmentList.stream()
+                        .collect(Collectors.groupingBy(
+                                shipment -> shipment.getShipmentStatus(),
+                                Collectors.counting()
+                        ));
+
+        return counts.entrySet().stream()
+                .map(entry -> new ShipmentStatusCountDto(
+                        entry.getKey(),
+                        entry.getValue()))
+                .toList();
     }
 }
 /*
