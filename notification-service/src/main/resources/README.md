@@ -23,7 +23,7 @@
 
 ### Invoice-created publisher (optional integration)
 Copy both Java files in `integration-examples/invoice-service/` to `com.example.invoicing.kafka`.
-In `InvoiceService`, inject `InvoiceEventPublisher`. In the **new invoice branch only**, after `invoiceRepository.save(invoice)`:
+In `InvoiceService`, inject `InvoiceEventProducer`. In the **new invoice branch only**, after `invoiceRepository.save(invoice)`:
 
 ```java
 // Minimal demonstration: Kafka publish is not atomic with DB commit.
@@ -31,7 +31,7 @@ invoiceEventPublisher.publish(new InvoiceCreatedEvent(
         invoice.getInvoiceId(), invoice.getShipmentId(), invoice.getRevisionNumber()));
 ```
 
-Import `InvoiceCreatedEvent` and `InvoiceEventPublisher`. Do not publish in the `existingInvoice.isPresent()` path (idempotent retry). The same event type covers the initial invoice and later revisions using `revisionNumber`.
+Import `InvoiceCreatedEvent` and `InvoiceEventProducer`. Do not publish in the `existingInvoice.isPresent()` path (idempotent retry). The same event type covers the initial invoice and later revisions using `revisionNumber`.
 
 In invoice-service `application.yaml`, configure Kafka producer JSON serialization (in addition to existing `spring.kafka.bootstrap-servers`):
 

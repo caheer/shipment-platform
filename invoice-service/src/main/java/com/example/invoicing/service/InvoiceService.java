@@ -5,6 +5,8 @@ import com.example.invoicing.dto.CreateInvoiceRequestDto;
 import com.example.invoicing.dto.InvoiceDetailedDto;
 import com.example.invoicing.dto.InvoiceResponseDto;
 import com.example.invoicing.dto.InvoiceSearchItemDto;
+import com.example.invoicing.kafka.InvoiceCreatedEvent;
+import com.example.invoicing.kafka.InvoiceEventProducer;
 import com.example.invoicing.model.Invoice;
 import com.example.invoicing.pricing.PricingStrategyFactory;
 import com.example.invoicing.pricing.ShippingPricingStrategy;
@@ -28,10 +30,13 @@ public class InvoiceService {
 
     private final PricingStrategyFactory pricingStrategyFactory;
 
-    public InvoiceService(InvoiceRepository invoiceRepository, InvoiceSearchByCriteriaRepository invoiceSearchByCriteriaRepository, PricingStrategyFactory pricingStrategyFactory) {
+    private final InvoiceEventProducer invoiceEventProducer;
+
+    public InvoiceService(InvoiceRepository invoiceRepository, InvoiceSearchByCriteriaRepository invoiceSearchByCriteriaRepository, PricingStrategyFactory pricingStrategyFactory, InvoiceEventProducer invoiceEventProducer) {
         this.invoiceRepository = invoiceRepository;
         this.invoiceSearchByCriteriaRepository = invoiceSearchByCriteriaRepository;
         this.pricingStrategyFactory = pricingStrategyFactory;
+        this.invoiceEventProducer = invoiceEventProducer;
     }
 
 
@@ -73,9 +78,11 @@ public class InvoiceService {
         invoice.setAdditionalCharges(BigDecimal.ZERO);
         invoice.setTotalAmount(BigDecimal.ZERO);
 
-        invoiceRepository.save(invoice);
+        Invoice newInvoice = invoiceRepository.save(invoice);
 
-        return new InvoiceResponseDto(invoice.getInvoiceId());
+        invoiceEventProducer.publish(new InvoiceCreatedEvent(newInvoice.getInvoiceId(), newInvoice.getShipmentId(), newInvoice.getRevisionNumber()));
+
+        return new InvoiceResponseDto(newInvoice.getInvoiceId());
     }
 
     @Transactional

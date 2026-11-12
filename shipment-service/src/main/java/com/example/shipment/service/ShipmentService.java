@@ -3,6 +3,7 @@ package com.example.shipment.service;
 import com.example.shipment.dto.pdf.ShipmentPdfDataDto;
 import com.example.shipment.dto.shipment.*;
 import com.example.shipment.exception.*;
+import com.example.shipment.kafka.ShipmentCreatedEvent;
 import com.example.shipment.kafka.ShipmentEventProducer;
 import com.example.shipment.kafka.ShipmentStatusChangedEvent;
 import com.example.shipment.model.*;
@@ -90,6 +91,8 @@ public class ShipmentService {
 
         ShipmentEvent shipmentEvent = new ShipmentEvent(UUID.randomUUID(), savedShipment, event, currentDate);
         shipmentEventRepository.save(shipmentEvent);
+
+        shipmentEventProducer.publish(new ShipmentCreatedEvent(savedShipment.getShipmentId(), savedShipment.getShipmentName(), currentDate));
 
         return new ShipmentDto(savedShipment.getShipmentId(), savedShipment.getShipmentName());
     }
