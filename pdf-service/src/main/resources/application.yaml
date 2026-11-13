@@ -6,11 +6,12 @@ app:
     threads: 3
   pdf:
     output-directory: ${PDF_OUTPUT_DIRECTORY:./generated-pdfs}
-
+  aws:
+    s3:
+      bucket: shipment-platform-pdf-development-029096971957-eu-north-1-an
 services:
   shipment:
     base-url: ${SHIPMENT_SERVICE_URL:http://localhost:8080}
-
 spring:
   application:
     name: pdf-service

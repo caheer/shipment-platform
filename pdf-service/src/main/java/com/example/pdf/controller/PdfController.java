@@ -4,13 +4,10 @@ import com.example.pdf.PdfGenerationCoordinator;
 import com.example.pdf.PdfJobRegistry;
 import com.example.pdf.PdfJobStatus;
 import com.example.pdf.dto.PdfJobDto;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
+import com.example.pdf.service.S3PdfStorageService;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,10 +16,12 @@ import java.util.UUID;
 public class PdfController {
     private final PdfGenerationCoordinator coordinator;
     private final PdfJobRegistry registry;
+    private final S3PdfStorageService s3PdfStorageService;
 
-    public PdfController(PdfGenerationCoordinator coordinator, PdfJobRegistry registry) {
+    public PdfController(PdfGenerationCoordinator coordinator, PdfJobRegistry registry, S3PdfStorageService s3PdfStorageService) {
         this.coordinator = coordinator;
         this.registry = registry;
+        this.s3PdfStorageService = s3PdfStorageService;
     }
 
     @PostMapping("/generatePdfAsync/{shipmentId}")
@@ -47,6 +46,26 @@ public class PdfController {
     }
 
     @GetMapping("/download/{jobId}")
+    public ResponseEntity<byte[]> download(@PathVariable UUID jobId) {
+        PdfJobDto job = registry.getJob(jobId);
+
+        if (job.status() != PdfJobStatus.COMPLETED || job.filePath() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "PDF is not ready");
+        }
+
+        byte[] pdfBytes = s3PdfStorageService.downloadPdf(job.filePath());
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .headers(headers -> headers.setContentDisposition(
+                        ContentDisposition.attachment()
+                                .filename("shipment-" + job.shipmentId() + ".pdf")
+                                .build()))
+                .body(pdfBytes);
+    }
+/*
+    @GetMapping("/download/{jobId}")
     public ResponseEntity<Resource> download(@PathVariable UUID jobId) {
         PdfJobDto job = registry.getJob(jobId);
         if (job.status() != PdfJobStatus.COMPLETED || job.filePath() == null) {
@@ -63,5 +82,5 @@ public class PdfController {
                                 .filename(file.getFileName().toString())
                                 .build()))
                 .body(new FileSystemResource(file));
-    }
+    }*/
 }

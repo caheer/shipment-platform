@@ -24,13 +24,17 @@ import java.util.concurrent.ThreadLocalRandom;
 @Service
 public class ShipmentPdfGenerationService {
     private static final Logger log = LoggerFactory.getLogger(ShipmentPdfGenerationService.class);
-    private final ShipmentClient shipmentClient;
-    private final Path outputDirectory;
 
-    public ShipmentPdfGenerationService(ShipmentClient shipmentClient,
-            @Value("${app.pdf.output-directory:./generated-pdfs}") String outputDirectory) {
+    private final ShipmentClient shipmentClient;
+    private final S3PdfStorageService s3PdfStorageService;
+
+
+    public ShipmentPdfGenerationService(
+            ShipmentClient shipmentClient,
+            S3PdfStorageService s3PdfStorageService) {
+
         this.shipmentClient = shipmentClient;
-        this.outputDirectory = Path.of(outputDirectory).toAbsolutePath().normalize();
+        this.s3PdfStorageService = s3PdfStorageService;
     }
 
     public PdfGenerationResult generateShipmentPdf(UUID shipmentId) {
@@ -49,17 +53,25 @@ public class ShipmentPdfGenerationService {
 
         try {
             byte[] pdfBytes = generateShipmentPdfBox(shipmentId);
-            Files.createDirectories(outputDirectory);
-            Path path = outputDirectory.resolve("shipment_" + shipmentId + "_" + UUID.randomUUID() + ".pdf");
-            Files.write(path, pdfBytes);
-            log.info("PDF generated: {}", path);
-            //4. Worker generates the PDF
-            //Your fake service simulates the generation using Thread.sleep() for 3–8 seconds. Once finished, it creates and returns PdfGenerationResult.
-            // Existing record's pdfContent() field currently contains a file path.
-            return new PdfGenerationResult(shipmentPdfDataDto.shipmentId(),
-                    path.toString(), LocalDateTime.now());
+
+            //4. Worker generates the PDF, it creates and returns PdfGenerationResult.
+
+            String objectKey = "shipments/" + shipmentId + "/"
+                    + UUID.randomUUID() + ".pdf";
+
+            s3PdfStorageService.uploadPdf(objectKey, pdfBytes);
+
+            log.info("PDF uploaded to S3: {}", objectKey);
+
+            return new PdfGenerationResult(
+                    shipmentPdfDataDto.shipmentId(),
+                    objectKey,
+                    LocalDateTime.now()
+            );
+
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to save PDF for " + shipmentId, e);
+            throw new IllegalStateException(
+                    "Failed to generate PDF for " + shipmentId, e);
         }
     }
 
@@ -84,4 +96,24 @@ public class ShipmentPdfGenerationService {
             return output.toByteArray();
         }
     }
+
+/*    public PdfGenerationResult generateShipmentPdf(UUID shipmentId) {
+        ...
+
+        try {
+            byte[] pdfBytes = generateShipmentPdfBox(shipmentId);
+            Files.createDirectories(outputDirectory);
+            Path path = outputDirectory.resolve("shipment_" + shipmentId + "_" + UUID.randomUUID() + ".pdf");
+            Files.write(path, pdfBytes);
+            log.info("PDF generated: {}", path);
+            //4. Worker generates the PDF
+            //it creates and returns PdfGenerationResult.
+            // Existing record's pdfContent() field currently contains a file path.
+            return new PdfGenerationResult(shipmentPdfDataDto.shipmentId(),
+                    path.toString(), LocalDateTime.now());
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to save PDF for " + shipmentId, e);
+            ...
+        }
+    }*/
 }
