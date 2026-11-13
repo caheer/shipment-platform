@@ -10,7 +10,7 @@ Generated against **shipment_platform_project_snapshot_2026-11-06_11-04-22.txt**
 3. Start optional services as needed: `invoice-service` **8082**, `pdf-service` **8081**, `report-service` **8083**, `notification-service` **8084**. PostgreSQL and Kafka dependencies need to be running as configured in your project.
 4. For cross-origin browser access, copy each `optional-cors/<service>/src/.../LocalFrontendCorsConfig.java` into the matching source package of that service. These are **development-only** configurations. Shipment-service's same-origin requests require no CORS config.
 
-**IMPORTANT: Port collision.** Your root `docker-compose.yaml` currently maps Kafka UI to host `8081:8080`, conflicting with the PDF service at port 8081. Change the `kafka-ui` mapping in the project's own docker-compose.yaml to `"8091:8080"` (or another available host port), then recreate that container. Kafka UI moves to http://localhost:8091; PDF service stays at http://localhost:8081. This archive does not alter your docker-compose.yaml automatically.
+**IMPORTANT: Port collision.** Your root `../../../../docker-compose-kafka.yaml` currently maps Kafka UI to host `8081:8080`, conflicting with the PDF service at port 8081. Change the `kafka-ui` mapping in the project's own docker-compose.yaml to `"8091:8080"` (or another available host port), then recreate that container. Kafka UI moves to http://localhost:8091; PDF service stays at http://localhost:8081. This archive does not alter your docker-compose.yaml automatically.
 
 Bootstrap CSS/JS loads from a CDN, so an Internet connection is needed for the styling and the create-shipment modal. The REST calls themselves remain local.
 
