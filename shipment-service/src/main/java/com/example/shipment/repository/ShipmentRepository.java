@@ -1,3 +1,4 @@
+/*
 package com.example.shipment.repository;
 
 import com.example.shipment.dto.shipment.ShipmentDetailsDto;
@@ -67,6 +68,7 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
     Optional<Shipment> findShipmentWithCustomerData(UUID shipmentId);
 
 
+*/
 /*
     @EntityGraph(attributePaths = {
             "insurance",
@@ -86,6 +88,8 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
                 LEFT JOIN FETCH s.shipmentComments
             """)
     List<Shipment> findAllShipmentsWithComments();
-*/
+*//*
+
 
 }
+*/
