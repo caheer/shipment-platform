@@ -1,6 +1,5 @@
 package com.example.invoicing.controller;
 
-import com.example.AIGeneratedCode;
 import com.example.invoicing.dto.InvoiceDetailedDto;
 import com.example.invoicing.dto.InvoiceSearchItemDto;
 import com.example.invoicing.repository.InvoiceSearchCriteria;
@@ -15,7 +14,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-@AIGeneratedCode
 @RestController
 @RequestMapping("/api/invoices")
 public class InvoiceController {
